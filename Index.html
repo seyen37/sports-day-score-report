@@ -141,7 +141,7 @@ details summary{cursor:pointer;min-height:32px;font-size:16px}
 
 <script>
 'use strict';
-var APP_VERSION = 'v1.21.0'; // 介面版本，改版時與 Code.gs 的 VERSION 一起更新
+var APP_VERSION = 'v1.21.1'; // 介面版本，改版時與 Code.gs 的 VERSION 一起更新
 document.getElementById('ver').textContent = APP_VERSION;
 var S = { boot: null, cases: [], who: { roles: [], name: '', email: '' }, tab: 'report', type: '個人', certScope: 'unprinted', certEvents: {},
   photo: '', done: null, q: '', filter: '全部', loadedAt: '', busy: false };
@@ -155,10 +155,28 @@ var store = {
 function call(fn) {
   var args = Array.prototype.slice.call(arguments, 1);
   return new Promise(function (ok, no) {
-    var r = google.script.run.withSuccessHandler(ok).withFailureHandler(function (e) { no(new Error((e && e.message) || String(e))); });
+    var r = google.script.run.withSuccessHandler(ok).withFailureHandler(function (e) { no(new Error(netMsg((e && e.message) || String(e)))); });
     r[fn].apply(r, args);
   });
 }
+function netMsg(m) { // 斷線時的系統訊息是英文，改成看得懂的說明；後端回覆的中文訊息原樣顯示
+  return /NetworkError|Connection failure|HTTP 0|Failed to fetch|Load failed|network|timed? ?out/i.test(m) && !/[\u4e00-\u9fff]/.test(m)
+    ? '網路連線不穩，請確認行動網路或 Wi-Fi 後再試一次（畫面上的資料不會遺失）' : m;
+}
+/* 司儀播報時讓螢幕保持開啟（瀏覽器不支援就略過） */
+var WL = null, WLwait = false;
+function wake(on) {
+  try {
+    if (!on) { if (WL) { WL.release().catch(function () {}); WL = null; } return; }
+    if (WL || WLwait || !navigator.wakeLock || document.hidden) { return; }
+    WLwait = true;
+    navigator.wakeLock.request('screen').then(function (l) {
+      WLwait = false; WL = l; l.addEventListener('release', function () { if (WL === l) { WL = null; } });
+      if (S.tab !== 'mc') { wake(false); }
+    }).catch(function () { WLwait = false; });
+  } catch (e) { WLwait = false; }
+}
+document.addEventListener('visibilitychange', function () { if (!document.hidden && S.tab === 'mc') { wake(true); } });
 function toast(msg) { var t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, 2600); }
 var NUM = { '1': '一', '2': '二', '3': '三' };
 function clsLabel(c) { var g = { '1': '一', '2': '二', '3': '三', '4': '四', '5': '五', '6': '六' }[String(c).charAt(0)] || ''; return g + '年' + Number(String(c).slice(1)) + '班'; }
@@ -190,7 +208,7 @@ $('#whoBtn').addEventListener('click', function () {
 });
 $('#nav').addEventListener('click', function (e) { var b = e.target.closest('button[data-tab]'); if (b) { S.q = ''; S.filter = '全部'; show(b.dataset.tab); } });
 function show(tab) {
-  S.tab = tab;
+  S.tab = tab; wake(tab === 'mc');
   $$('#nav button').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === tab)); });
   var keep = document.activeElement && document.activeElement.id === 'q';
   ({ report: viewReport, mine: viewMine, progress: viewProgress, mc: viewMc, admin: viewAdmin, audit: viewAudit, roster: viewRoster, settings: viewSettings })[tab]();
@@ -203,6 +221,7 @@ function pinDialog(after) {
     '<label class="f" for="pin">通行碼</label><input id="pin" type="password" inputmode="numeric" autocomplete="off">' +
     '<div id="pinErr"></div><button class="btn pri block big" id="pinGo" type="button">登入</button>');
   $('#pin').focus();
+  $('#pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('#pinGo').click(); } });
   $('#pinGo').addEventListener('click', function () {
     var p = $('#pin').value.trim(); if (!p) { return; }
     this.disabled = true; var btn = this;
@@ -243,6 +262,7 @@ function viewReport() {
   bindOther($('#places'));
   $('#cam').addEventListener('change', onPhoto); $('#pick').addEventListener('change', onPhoto);
   $('#f').addEventListener('submit', function (e) { e.preventDefault(); submit(false); });
+  ['input', 'change'].forEach(function (ev) { $('#f').addEventListener(ev, function (e) { if (['date', 'time', 'urgent'].indexOf(e.target.id) >= 0) { S.touched = true; } }); });
   fillEvents(); renderPhoto();
 }
 function evList() { return S.type === '接力' ? S.boot.relay : S.boot.individual; }
@@ -324,7 +344,7 @@ function onPhoto(e) {
     var max = 1280, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h));
     var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-    S.photo = c.toDataURL('image/jpeg', 0.72); URL.revokeObjectURL(url); renderPhoto();
+    S.touched = true; S.photo = c.toDataURL('image/jpeg', 0.72); URL.revokeObjectURL(url); renderPhoto();
   };
   img.onerror = function () { URL.revokeObjectURL(url); toast('無法讀取這張照片'); };
   img.src = url;
@@ -421,7 +441,7 @@ function loadCase(c) {
   $('#urgent').checked = !!c.urgent; setSendLabel(); renderDup('edit', c);
 }
 function onEventChange() {
-  S.editId = null; S.asNew = null; fillPlaces(); setSendLabel();
+  S.editId = null; S.asNew = null; S.touched = false; fillPlaces(); setSendLabel();
   var e = curEvent(); if (!e) { renderDup(''); return; }
   var name = e.name, type = S.type;
   var apply = function (final) {
@@ -430,7 +450,8 @@ function onEventChange() {
     if (S.editId || S.asNew === name) { $('#dupBox').dataset.state = 'done'; return; }
     var c = latestCase(name, type);
     if (c && S.boot.allowRevise === false) { renderDup('locked', c); return; }
-    if (c && !placesTyped()) { loadCase(c); } else if (c) { renderDup('offer', c); } else { renderDup(final ? '' : 'checking'); }
+    // 選完項目後已經動過日期、時間、急件或照片，就不自動蓋掉，改顯示帶入按鈕
+    if (c && !placesTyped() && !S.touched) { loadCase(c); } else if (c) { renderDup('offer', c); } else { renderDup(final ? '' : 'checking'); }
   };
   apply(false);
   call('listCases', store.get('pin')).then(function (r) { S.cases = r.cases; S.who = r.who; S.boot.allowRevise = r.allowRevise !== false; apply(true); }).catch(function () { apply(true); });
@@ -623,8 +644,12 @@ function viewMc() {
   });
   $$('[data-say]').forEach(function (b) {
     b.addEventListener('click', function () {
-      b.disabled = true;
-      call('markAnnounced', store.get('pin'), b.dataset.say, b.dataset.flag === '1').then(function (r) { toast(b.dataset.flag === '1' ? b.dataset.say + ' 已播報，案件已完成' : b.dataset.say + ' 已取消播報' + (r && r.status !== '已完成' ? '，案件退回' + r.status : '')); return refresh(); }).catch(function (e) { toast(e.message); b.disabled = false; });
+      var go = function () {
+        b.disabled = true;
+        call('markAnnounced', store.get('pin'), b.dataset.say, b.dataset.flag === '1').then(function (r) { toast(b.dataset.flag === '1' ? b.dataset.say + ' 已播報，案件已完成' : b.dataset.say + ' 已取消播報' + (r && r.status !== '已完成' ? '，案件退回' + r.status : '')); return refresh(); }).catch(function (e) { toast(e.message); b.disabled = false; });
+      };
+      if (b.dataset.flag === '1') { go(); return; }
+      confirmSheet('取消已播報？', b.dataset.say + ' 會退回尚未播報，並重新出現在播報清單裡。', '確定取消', go, '不要取消'); // 防止在臺上誤觸
     });
   });
 }
@@ -1080,7 +1105,7 @@ function buildDocx(tpl, data) { // 一張獎狀一頁，頁與頁之間用「下
 function saveBlob(blob, filename) {
   var url = URL.createObjectURL(blob); var a = document.createElement('a');
   a.href = url; a.download = filename; a.style.display = 'none'; document.body.appendChild(a); a.click();
-  setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 4000);
+  setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 30000); // 慢的裝置寫檔較久，太早釋放會下載失敗
 }
 function downloadCerts(btn, caseId, kind, filename, sample) {
   var label = btn.textContent; btn.disabled = true; btn.textContent = '產生中…';
@@ -1314,8 +1339,8 @@ function confirmTwice(t1, m1, t2, m2, okText, onOk) { // 刪除類動作一律�
 function openSheet(html) { $('#sheet').innerHTML = '<button class="x" type="button" aria-label="關閉">×</button>' + html; $('#modal').hidden = false; $('#sheet .x').addEventListener('click', closeSheet); $('#sheet').scrollTop = 0; }
 function closeSheet() { $('#modal').hidden = true; $('#sheet').innerHTML = ''; }
 $('#modal').addEventListener('click', function (e) { if (e.target.id === 'modal') { closeSheet(); } });
-function confirmSheet(title, msg, okText, onOk) {
-  openSheet('<h2>' + esc(title) + '</h2><p>' + esc(msg) + '</p><div class="btns"><button class="btn" id="cNo" type="button">返回修改</button><button class="btn pri" id="cOk" type="button">' + esc(okText) + '</button></div>');
+function confirmSheet(title, msg, okText, onOk, noText) {
+  openSheet('<h2>' + esc(title) + '</h2><p>' + esc(msg) + '</p><div class="btns"><button class="btn" id="cNo" type="button">' + esc(noText || '返回修改') + '</button><button class="btn pri" id="cOk" type="button">' + esc(okText) + '</button></div>');
   $('#cNo').addEventListener('click', closeSheet);
   $('#cOk').addEventListener('click', function () { closeSheet(); onOk(); });
 }

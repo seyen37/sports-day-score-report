@@ -3,7 +3,7 @@
  * 設計者：臺北市福林國小 許士彥 2026.11.21.
  * 使用方式：綁定在一份 Google 試算表上，先執行一次 setup()，再部署為網頁應用程式。
  */
-const VERSION = 'v1.21.0'; // 後端版本，改版時與 Index.html 的 APP_VERSION 一起更新
+const VERSION = 'v1.21.1'; // 後端版本，改版時與 Index.html 的 APP_VERSION 一起更新
 const TZ = 'Asia/Taipei';
 const SH = { CASE: '案件', ROSTER: '名單', ROLE: '角色', CONF: '設定', MERGE: '獎狀合併列印', BACKUP: '案件備份' };
 const CASE_H = ['案件編號', '送出時間', '類別', '項目', '比賽日期', '比賽時間', '檢錄員', '填報帳號', '急件',
