@@ -3,13 +3,13 @@
  * 設計者：臺北市福林國小 許士彥 2026.11.21.
  * 使用方式：綁定在一份 Google 試算表上，先執行一次 setup()，再部署為網頁應用程式。
  */
-const VERSION = 'v1.22.0'; // 後端版本，改版時與 Index.html 的 APP_VERSION 一起更新
+const VERSION = 'v1.22.1'; // 後端版本，改版時與 Index.html 的 APP_VERSION 一起更新
 const TZ = 'Asia/Taipei';
 const SH = { CASE: '案件', ROSTER: '名單', ROLE: '角色', CONF: '設定', MERGE: '獎狀合併列印', BACKUP: '案件備份' };
 const CASE_H = ['案件編號', '送出時間', '類別', '項目', '比賽日期', '比賽時間', '檢錄員', '填報帳號', '急件',
   '成績摘要', '狀態', '負責人', '處理結果', '完成時間', '播報時間', '稽核', '稽核意見', '稽核時間',
   '照片檔案ID', '成績資料', '處理紀錄', '列印時間'];
-const COL = {}; CASE_H.forEach(function (h, i) { COL[h] = i; });
+const COL = {}; CASE_H.forEach((h, i) => { COL[h] = i; });
 const STATUS = ['待處理', '處理中', '已完成'];
 const ROLES = ['行政', '司儀', '校長'];
 const GRADE_NUM = { '一': '1', '二': '2', '三': '3', '四': '4', '五': '5', '六': '6' };
@@ -79,15 +79,15 @@ function pin_() { return String(Math.floor(100000 + Math.random() * 900000)); }
 function now_() { return Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss'); }
 function safe_(v) { // 一律存成文字，並避免被當成公式
   const s = String(v === null || v === undefined ? '' : v);
-  return /^[=+\-@]/.test(s) ? "'" + s : s;
+  return /^[=+\-@]/.test(s) ? `'${s}` : s;
 }
 function writeRows_(sh, row, rows) {
-  const out = rows.map(function (r) { return r.map(safe_); });
+  const out = rows.map(r => r.map(safe_));
   sh.getRange(row, 1, out.length, out[0].length).setNumberFormat('@').setValues(out);
 }
 function sheet_(name) {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
-  if (!sh) { throw new Error('找不到工作表「' + name + '」，請先執行 setup()'); }
+  if (!sh) { throw new Error(`找不到工作表「${name}」，請先執行 setup()`); }
   return sh;
 }
 function table_(name) { // 回傳不含標題列的文字資料
@@ -109,18 +109,18 @@ const NO_MODES = ['同一字號', '流水號'];
 let CONF_CACHE_ = null; // 同一次請求內只讀一次設定工作表（每次請求都會重新載入程式，不會跨請求殘留）
 function conf_() { // 舊版試算表沒有的設定項目，會以預設值補上
   if (!CONF_CACHE_) {
-    const o = {}; Object.keys(CONF_DEFAULT).forEach(function (k) { o[k] = CONF_DEFAULT[k]; });
-    table_(SH.CONF).forEach(function (r) { if (r[0]) { o[r[0]] = r[1]; } }); CONF_CACHE_ = o;
+    const o = {}; Object.keys(CONF_DEFAULT).forEach(k => { o[k] = CONF_DEFAULT[k]; });
+    table_(SH.CONF).forEach(r => { if (r[0]) { o[r[0]] = r[1]; } }); CONF_CACHE_ = o;
   }
-  const copy = {}; Object.keys(CONF_CACHE_).forEach(function (k) { copy[k] = CONF_CACHE_[k]; }); return copy;
+  const copy = {}; Object.keys(CONF_CACHE_).forEach(k => { copy[k] = CONF_CACHE_[k]; }); return copy;
 }
 function str_(v, max, label, required) {
   const s = String(v === null || v === undefined ? '' : v).trim();
-  if (required && !s) { throw new Error('請填寫' + label); }
-  if (s.length > max) { throw new Error(label + '過長'); }
+  if (required && !s) { throw new Error(`請填寫${label}`); }
+  if (s.length > max) { throw new Error(`${label}過長`); }
   return s;
 }
-function parseTime_(s) { return new Date(String(s).replace(' ', 'T') + '+08:00').getTime(); }
+function parseTime_(s) { return new Date(`${String(s).replace(' ', 'T')}+08:00`).getTime(); }
 
 /* ───────── 身分 ───────── */
 function who_(pin) {
@@ -128,12 +128,12 @@ function who_(pin) {
   try { email = String(Session.getActiveUser().getEmail() || '').toLowerCase(); } catch (e) { email = ''; }
   const p = String(pin || '').trim();
   const roles = []; let name = '';
-  table_(SH.ROLE).forEach(function (r) {
+  table_(SH.ROLE).forEach(r => {
     const role = String(r[0]).trim();
-    if (ROLES.indexOf(role) < 0) { return; }
+    if (!ROLES.includes(role)) { return; }
     const em = String(r[2]).trim().toLowerCase(); const pn = String(r[3]).trim();
     if ((email && em && em === email) || (p && pn && pn === p)) {
-      if (roles.indexOf(role) < 0) { roles.push(role); }
+      if (!roles.includes(role)) { roles.push(role); }
       if (!name) { name = String(r[1]).trim(); }
     }
   });
@@ -141,8 +141,8 @@ function who_(pin) {
 }
 function need_(pin, allowed) {
   const w = who_(pin);
-  const ok = w.roles.some(function (r) { return allowed.indexOf(r) >= 0; });
-  if (!ok) { throw new Error('沒有權限：此功能限' + allowed.join('、') + '使用'); }
+  const ok = w.roles.some(r => allowed.includes(r));
+  if (!ok) { throw new Error(`沒有權限：此功能限${allowed.join('、')}使用`); }
   return w;
 }
 /* 檢錄通行碼：系統設定有填才檢查。行政、司儀、校長登入後不必另外輸入 */
@@ -157,11 +157,11 @@ function gate_(p) {
 /* ───────── 項目與名單 ───────── */
 function events_() {
   const ind = [], relay = [], idx = {};
-  table_(SH.ROSTER).forEach(function (r) {
+  table_(SH.ROSTER).forEach(r => {
     const type = String(r[0]).trim(), ev = String(r[1]).trim(), cls = String(r[2]).trim();
     const no = String(r[3]).trim(), nm = String(r[4]).trim();
     if (!ev || !cls) { return; }
-    const key = type + '|' + ev;
+    const key = `${type}|${ev}`;
     if (!idx[key]) {
       idx[key] = { name: ev, grade: ev.charAt(0), finalists: [], classes: [], roster: {} };
       if (type === '個人') { ind.push(idx[key]); } else if (type === '接力') { relay.push(idx[key]); } else { delete idx[key]; return; }
@@ -170,7 +170,7 @@ function events_() {
     if (type === '個人') {
       if (nm) { e.finalists.push({ cls: cls, name: nm }); }
     } else {
-      if (e.classes.indexOf(cls) < 0) { e.classes.push(cls); e.roster[cls] = []; }
+      if (!e.classes.includes(cls)) { e.classes.push(cls); e.roster[cls] = []; }
       if (nm) { e.roster[cls].push({ no: no, name: nm }); }
     }
   });
@@ -183,14 +183,18 @@ function getBootstrap(pin) {
   return {
     version: VERSION, needCode: !!gateCode_(), allowRevise: c['檢錄員可更正'] !== '關閉', title: c['活動名稱'] || '體育表演會', appName: c['系統名稱'], school: c['學校名稱'], year: c['學年度'], eventDate: c['活動日期'],
     overdueMin: Number(c['逾時分鐘']) || 15,
-    individual: ev.individual.map(function (e) { return { name: e.name, grade: e.grade, finalists: e.finalists }; }),
-    relay: ev.relay.map(function (e) {
-      const counts = {}; e.classes.forEach(function (c) { counts[c] = e.roster[c].length; });
+    individual: ev.individual.map(e => ({
+      name: e.name,
+      grade: e.grade,
+      finalists: e.finalists
+    })),
+    relay: ev.relay.map(e => {
+      const counts = {}; e.classes.forEach(c => { counts[c] = e.roster[c].length; });
       return { name: e.name, grade: e.grade, classes: e.classes, counts: counts };
     }),
     who: w,
-    assignees: table_(SH.ROLE).filter(function (r) { return String(r[0]).trim() === '行政'; })
-      .map(function (r) { return String(r[1]).trim(); }).filter(String)
+    assignees: table_(SH.ROLE).filter(r => String(r[0]).trim() === '行政')
+      .map(r => String(r[1]).trim()).filter(String)
   };
 }
 
@@ -208,14 +212,14 @@ function rowToCase_(r, overdueMin, nowMs) {
     assignee: r[COL['負責人']], result: r[COL['處理結果']], doneAt: r[COL['完成時間']],
     announcedAt: r[COL['播報時間']], audit: r[COL['稽核']], auditNote: r[COL['稽核意見']],
     auditAt: r[COL['稽核時間']], hasPhoto: !!r[COL['照片檔案ID']], log: log, printedAt: r[COL['列印時間']] || '',
-    corrected: log.some(function (l) { return String(l.what).indexOf('更正成績') === 0; }),
+    corrected: log.some(l => String(l.what).startsWith('更正成績')),
     waited: waited, overdue: status !== '已完成' && waited >= overdueMin
   };
 }
 function listCases(pin) {
   const c = conf_(); const om = Number(c['逾時分鐘']) || 15; const nowMs = Date.now();
-  const cases = table_(SH.CASE).filter(function (r) { return r[0]; })
-    .map(function (r) { return rowToCase_(r, om, nowMs); });
+  const cases = table_(SH.CASE).filter(r => r[0])
+    .map(r => rowToCase_(r, om, nowMs));
   return { cases: cases, who: who_(pin), now: now_(), needCode: !!gateCode_(), allowRevise: c['檢錄員可更正'] !== '關閉', mcOrder: String(c['播報順序'] || '').split(',').filter(String) };
 }
 function findRow_(id) {
@@ -228,7 +232,7 @@ function findRow_(id) {
       }
     }
   }
-  throw new Error('找不到案件 ' + id);
+  throw new Error(`找不到案件 ${id}`);
 }
 function saveRow_(f, who, action) {
   let log = [];
@@ -242,42 +246,40 @@ function getPhoto(pin, id) { // 現場照片可能拍到學生，限登入後查
   const f = findRow_(id); const fid = f.values[COL['照片檔案ID']];
   if (!fid) { return ''; }
   const blob = DriveApp.getFileById(fid).getBlob();
-  return 'data:' + blob.getContentType() + ';base64,' + Utilities.base64Encode(blob.getBytes());
+  return `data:${blob.getContentType()};base64,${Utilities.base64Encode(blob.getBytes())}`;
 }
 
 /* ───────── 名次資料檢查（送出與更正共用） ───────── */
 function places_(type, e, input) {
   if (!Array.isArray(input) || input.length < 1 || input.length > 3) { throw new Error('請填寫名次'); }
   const seen = {}; const places = [];
-  input.forEach(function (x) {
+  input.forEach(x => {
     x = x || {};
     const rank = Number(x.rank);
-    if ([1, 2, 3].indexOf(rank) < 0 || seen['r' + rank]) { throw new Error('名次資料不正確'); }
-    seen['r' + rank] = true;
-    const cls = str_(x.cls, 3, '第' + rank + '名班級', true);
-    if (!/^[1-6]\d{2}$/.test(cls) || cls.charAt(0) !== GRADE_NUM[e.grade]) { throw new Error('第' + rank + '名班級與項目年級不符'); }
+    if (![1, 2, 3].includes(rank) || seen[`r${rank}`]) { throw new Error('名次資料不正確'); }
+    seen[`r${rank}`] = true;
+    const cls = str_(x.cls, 3, `第${rank}名班級`, true);
+    if (!/^[1-6]\d{2}$/.test(cls) || cls.charAt(0) !== GRADE_NUM[e.grade]) { throw new Error(`第${rank}名班級與項目年級不符`); }
     const noScore = type === '接力' && e.grade === '三'; // 三年級大隊接力為趣味賽，可不記成績
-    const score = str_(x.score, 16, '第' + rank + '名成績', !noScore);
+    const score = str_(x.score, 16, `第${rank}名成績`, !noScore);
     const o = { rank: rank, cls: cls, score: score };
     if (type === '個人') {
-      o.name = str_(x.name, 12, '第' + rank + '名姓名', true);
-      if (seen[cls + o.name]) { throw new Error('同一位選手重複出現：' + o.name); }
+      o.name = str_(x.name, 12, `第${rank}名姓名`, true);
+      if (seen[cls + o.name]) { throw new Error(`同一位選手重複出現：${o.name}`); }
       seen[cls + o.name] = true;
     } else {
-      if (e.classes && e.classes.indexOf(cls) < 0) { throw new Error('班級不在該項目名單：' + cls); }
-      if (seen[cls]) { throw new Error('同一班級重複出現：' + cls); }
+      if (e.classes && !e.classes.includes(cls)) { throw new Error(`班級不在該項目名單：${cls}`); }
+      if (seen[cls]) { throw new Error(`同一班級重複出現：${cls}`); }
       seen[cls] = true;
     }
     places.push(o);
   });
-  places.sort(function (a, b) { return a.rank - b.rank; });
+  places.sort((a, b) => a.rank - b.rank);
   if (places[0].rank !== 1) { throw new Error('請至少填寫第 1 名'); }
   return places;
 }
 function summary_(places) {
-  return places.map(function (x) {
-    return '第' + x.rank + '名 ' + x.cls + (x.name ? ' ' + x.name : '') + ' ' + (x.score || '不記成績');
-  }).join('／');
+  return places.map(x => `第${x.rank}名 ${x.cls}${x.name ? ` ${x.name}` : ''} ${x.score || '不記成績'}`).join('／');
 }
 
 /* 案件編號取「目前最大號碼」與「設定裡記錄的流水號」較大者加 1，刪除案件後號碼不會重複使用 */
@@ -289,9 +291,9 @@ function setConf_(key, value) {
 }
 function nextCaseId_(rows) {
   let max = Number(conf_()['案件流水號']) || 0;
-  rows.forEach(function (r) { const m = /^R(\d+)$/.exec(r[0] || ''); if (m) { max = Math.max(max, Number(m[1])); } });
+  rows.forEach(r => { const m = /^R(\d+)$/.exec(r[0] || ''); if (m) { max = Math.max(max, Number(m[1])); } });
   const n = max + 1; setConf_('案件流水號', String(n));
-  return 'R' + (n < 1000 ? ('000' + n).slice(-3) : String(n));
+  return `R${n < 1000 ? (`000${n}`).slice(-3) : String(n)}`;
 }
 
 /* ───────── 檢錄員送出 ───────── */
@@ -304,8 +306,8 @@ function submitReport(p, force) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) { throw new Error('日期或時間格式不正確'); }
   const ev = events_(); const list = type === '接力' ? ev.relay : ev.individual;
   const evName = str_(p.event, 30, '項目', true);
-  const e = list.filter(function (x) { return x.name === evName; })[0];
-  if (!e) { throw new Error('項目不存在：' + evName); }
+  const e = list.filter(x => x.name === evName)[0];
+  if (!e) { throw new Error(`項目不存在：${evName}`); }
   const places = places_(type, e, p.places);
   let photo = null;
   if (p.photo) {
@@ -318,23 +320,23 @@ function submitReport(p, force) {
   try {
     const sh = sheet_(SH.CASE); const rows = table_(SH.CASE);
     if (!force) {
-      const dup = rows.filter(function (r) { return r[COL['項目']] === evName; })[0];
+      const dup = rows.filter(r => r[COL['項目']] === evName)[0];
       if (dup) { return { duplicate: dup[COL['案件編號']] }; }
     }
     const id = nextCaseId_(rows);
     let fileId = '';
     if (photo) {
-      const blob = Utilities.newBlob(Utilities.base64Decode(photo.b64), photo.mime, id + '_' + evName + '.jpg');
+      const blob = Utilities.newBlob(Utilities.base64Decode(photo.b64), photo.mime, `${id}_${evName}.jpg`);
       fileId = DriveApp.getFolderById(conf_()['照片資料夾ID']).createFile(blob).getId();
     }
     const summary = summary_(places);
     const w = who_('');
-    const row = CASE_H.map(function () { return ''; });
+    const row = CASE_H.map(() => '');
     row[COL['案件編號']] = id; row[COL['送出時間']] = now_(); row[COL['類別']] = type; row[COL['項目']] = evName;
     row[COL['比賽日期']] = date; row[COL['比賽時間']] = time; row[COL['檢錄員']] = recorder;
     row[COL['填報帳號']] = w.email; row[COL['急件']] = p.urgent ? '是' : '否'; row[COL['成績摘要']] = summary;
     row[COL['狀態']] = '待處理'; row[COL['照片檔案ID']] = fileId; row[COL['成績資料']] = JSON.stringify(places);
-    row[COL['處理紀錄']] = JSON.stringify([{ t: now_(), by: recorder, what: '送出成績' + (p.urgent ? '（急件）' : '') }]);
+    row[COL['處理紀錄']] = JSON.stringify([{ t: now_(), by: recorder, what: `送出成績${p.urgent ? '（急件）' : ''}` }]);
     writeRows_(sh, rows.length + 2, [row]);
     return { id: id, summary: summary, at: row[COL['送出時間']] };
   } finally { lock.releaseLock(); }
@@ -362,12 +364,12 @@ function reviseReport(p) {
     const type = v[COL['類別']]; const evName = v[COL['項目']];
     if (String(p.event || '') !== evName) { throw new Error('項目與原案件不符，請重新選擇項目'); }
     const ev = events_(); const list = type === '接力' ? ev.relay : ev.individual;
-    const e = list.filter(function (x) { return x.name === evName; })[0] || { name: evName, grade: evName.charAt(0), classes: null };
+    const e = list.filter(x => x.name === evName)[0] || { name: evName, grade: evName.charAt(0), classes: null };
     const places = places_(type, e, p.places);
     const acts = []; const notes = [];
     const before = v[COL['成績摘要']]; const after = summary_(places);
     if (before !== after) {
-      acts.push('更正成績（檢錄員）：' + before + ' → ' + after);
+      acts.push(`更正成績（檢錄員）：${before} → ${after}`);
       v[COL['成績資料']] = JSON.stringify(places); v[COL['成績摘要']] = after;
       if (v[COL['播報時間']]) { v[COL['播報時間']] = ''; notes.push('需重新播報'); }
       if (v[COL['狀態']] === '已完成') { v[COL['狀態']] = '處理中'; v[COL['完成時間']] = ''; notes.push('退回處理中，獎狀請重印'); }
@@ -375,18 +377,18 @@ function reviseReport(p) {
       if (v[COL['列印時間']]) { v[COL['列印時間']] = ''; notes.push('需重新列印'); }
     }
     if (date !== v[COL['比賽日期']] || time !== v[COL['比賽時間']]) {
-      acts.push('比賽時間：' + v[COL['比賽日期']] + ' ' + v[COL['比賽時間']] + ' → ' + date + ' ' + time);
+      acts.push(`比賽時間：${v[COL['比賽日期']]} ${v[COL['比賽時間']]} → ${date} ${time}`);
       v[COL['比賽日期']] = date; v[COL['比賽時間']] = time;
     }
     const urgent = p.urgent ? '是' : '否';
     if (urgent !== v[COL['急件']]) { acts.push(urgent === '是' ? '標記為急件' : '取消急件'); v[COL['急件']] = urgent; }
     if (photo) {
-      const blob = Utilities.newBlob(Utilities.base64Decode(photo.b64), photo.mime, id + '_' + evName + '_更正.jpg');
+      const blob = Utilities.newBlob(Utilities.base64Decode(photo.b64), photo.mime, `${id}_${evName}_更正.jpg`);
       v[COL['照片檔案ID']] = DriveApp.getFolderById(conf_()['照片資料夾ID']).createFile(blob).getId();
       acts.push('更換現場照片');
     }
     if (!acts.length) { return { id: id, changed: false }; }
-    saveRow_(f, recorder, acts.join('；') + (why ? '（原因：' + why + '）' : '') + (notes.length ? '；' + notes.join('、') : ''));
+    saveRow_(f, recorder, acts.join('；') + (why ? `（原因：${why}）` : '') + (notes.length ? `；${notes.join('、')}` : ''));
     return { id: id, changed: true, notes: notes, at: now_(), summary: after };
   } finally { lock.releaseLock(); }
 }
@@ -400,16 +402,16 @@ function adminUpdate(pin, id, patch) {
     const assignee = str_(patch.assignee, 20, '負責人', false);
     const status = str_(patch.status, 5, '狀態', true);
     const result = str_(patch.result, 300, '處理結果', false);
-    if (STATUS.indexOf(status) < 0) { throw new Error('狀態不正確'); }
+    if (!STATUS.includes(status)) { throw new Error('狀態不正確'); }
     if (status === '已完成' && !result) { throw new Error('標記已完成前，請填寫實際處理結果'); }
-    if (assignee !== v[COL['負責人']]) { acts.push('分派負責人：' + (assignee || '（清空）')); v[COL['負責人']] = assignee; }
+    if (assignee !== v[COL['負責人']]) { acts.push(`分派負責人：${assignee || '（清空）'}`); v[COL['負責人']] = assignee; }
     if (status !== v[COL['狀態']]) {
-      acts.push('狀態：' + v[COL['狀態']] + ' → ' + status);
+      acts.push(`狀態：${v[COL['狀態']]} → ${status}`);
       v[COL['狀態']] = status;
       v[COL['完成時間']] = status === '已完成' ? now_() : '';
       if (status === '已完成') { v[COL['稽核']] = ''; v[COL['稽核意見']] = ''; v[COL['稽核時間']] = ''; }
     }
-    if (result !== v[COL['處理結果']]) { acts.push('處理結果：' + (result || '（清空）')); v[COL['處理結果']] = result; }
+    if (result !== v[COL['處理結果']]) { acts.push(`處理結果：${result || '（清空）'}`); v[COL['處理結果']] = result; }
     if (acts.length === 0) { return { ok: true, changed: false }; }
     saveRow_(f, w.name || '行政', acts.join('；'));
     return { ok: true, changed: true };
@@ -424,7 +426,7 @@ function correctReport(pin, id, input, reason) {
     const f = findRow_(id); const v = f.values;
     const type = v[COL['類別']]; const evName = v[COL['項目']];
     const ev = events_(); const list = type === '接力' ? ev.relay : ev.individual;
-    const e = list.filter(function (x) { return x.name === evName; })[0] || { name: evName, grade: evName.charAt(0), classes: null };
+    const e = list.filter(x => x.name === evName)[0] || { name: evName, grade: evName.charAt(0), classes: null };
     const places = places_(type, e, input);
     const before = v[COL['成績摘要']]; const after = summary_(places);
     if (before === after) { return { ok: true, changed: false }; }
@@ -434,24 +436,27 @@ function correctReport(pin, id, input, reason) {
     if (v[COL['狀態']] === '已完成') { v[COL['狀態']] = '處理中'; v[COL['完成時間']] = ''; notes.push('退回處理中，獎狀請重印'); }
     if (v[COL['稽核']] === '已核可') { v[COL['稽核']] = ''; v[COL['稽核意見']] = ''; v[COL['稽核時間']] = ''; notes.push('需重新稽核'); }
     if (v[COL['列印時間']]) { v[COL['列印時間']] = ''; notes.push('需重新列印'); }
-    saveRow_(f, w.name || '行政', '更正成績：' + before + ' → ' + after + '（原因：' + why + '）' + (notes.length ? '；' + notes.join('、') : ''));
+    saveRow_(f, w.name || '行政', `更正成績：${before} → ${after}（原因：${why}）${notes.length ? `；${notes.join('、')}` : ''}`);
     return { ok: true, changed: true, notes: notes };
   } finally { lock.releaseLock(); }
 }
 /* 司儀自訂播報順序：把待播報的案件上移、下移或置頂。順序存在設定工作表，所有司儀看到的一致 */
 function moveAnnounce(pin, id, dir) {
   need_(pin, ['司儀', '行政']);
-  if (['up', 'down', 'top'].indexOf(dir) < 0) { throw new Error('移動方向不正確'); }
+  if (!['up', 'down', 'top'].includes(dir)) { throw new Error('移動方向不正確'); }
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const saved = String(conf_()['播報順序'] || '').split(',').filter(String);
-    const pos = function (x) { const i = saved.indexOf(x); return i < 0 ? 1e9 : i; };
-    const ids = caseRows_().filter(function (r) { return r[0] && !r[COL['播報時間']]; })
-      .map(function (r) { return { id: r[0], at: r[COL['送出時間']] }; })
-      .sort(function (a, b) { return pos(a.id) - pos(b.id) || (a.at < b.at ? -1 : a.at > b.at ? 1 : (a.id < b.id ? -1 : 1)); })
-      .map(function (x) { return x.id; });
+    const pos = x => { const i = saved.indexOf(x); return i < 0 ? 1e9 : i; };
+    const ids = caseRows_().filter(r => r[0] && !r[COL['播報時間']])
+      .map(r => ({
+      id: r[0],
+      at: r[COL['送出時間']]
+    }))
+      .sort((a, b) => pos(a.id) - pos(b.id) || (a.at < b.at ? -1 : a.at > b.at ? 1 : (a.id < b.id ? -1 : 1)))
+      .map(x => x.id);
     const i = ids.indexOf(String(id));
-    if (i < 0) { throw new Error('找不到待播報的案件 ' + id); }
+    if (i < 0) { throw new Error(`找不到待播報的案件 ${id}`); }
     const j = dir === 'top' ? 0 : dir === 'up' ? i - 1 : i + 1;
     if (j >= 0 && j < ids.length && j !== i) { ids.splice(i, 1); ids.splice(j, 0, String(id)); }
     setConf_('播報順序', ids.join(','));
@@ -479,7 +484,7 @@ function markAnnounced(pin, id, flag) {
       if (v[COL['狀態']] === '已完成' && v[COL['處理結果']] === AUTO_DONE) {
         v[COL['狀態']] = v[COL['列印時間']] ? '處理中' : '待處理'; v[COL['完成時間']] = ''; v[COL['處理結果']] = '';
         v[COL['稽核']] = ''; v[COL['稽核意見']] = ''; v[COL['稽核時間']] = '';
-        act += '，案件退回' + v[COL['狀態']];
+        act += `，案件退回${v[COL['狀態']]}`;
       }
     }
     saveRow_(f, w.name || '司儀', act);
@@ -490,7 +495,7 @@ function markAnnounced(pin, id, flag) {
 /* 標記獎狀已列印（限行政）。ids 可為單一編號或陣列；狀態真的改變才寫入紀錄 */
 function fixCaseHeader_() { // 舊版建立的試算表沒有後來新增的欄位標題，補上
   const sh = sheet_(SH.CASE); const h = sh.getRange(1, 1, 1, CASE_H.length).getDisplayValues()[0];
-  if (CASE_H.some(function (x, i) { return h[i] !== x; })) { writeRows_(sh, 1, [CASE_H]); }
+  if (CASE_H.some((x, i) => h[i] !== x)) { writeRows_(sh, 1, [CASE_H]); }
 }
 function markPrinted(pin, ids, flag) {
   const w = need_(pin, ['行政']);
@@ -500,8 +505,8 @@ function markPrinted(pin, ids, flag) {
   try {
     fixCaseHeader_();
     const sh = sheet_(SH.CASE); const rows = caseRows_(); const t = now_(); let n = 0;
-    rows.forEach(function (v, i) {
-      if (!v[0] || want.indexOf(v[0]) < 0 || !!v[COL['列印時間']] === !!flag) { return; }
+    rows.forEach((v, i) => {
+      if (!v[0] || !want.includes(v[0]) || !!v[COL['列印時間']] === !!flag) { return; }
       v[COL['列印時間']] = flag ? t : '';
       // 行政收件匣的狀態跟著流程走：列印後由待處理進到處理中，取消列印且尚未播報則退回待處理
       if (flag && v[COL['狀態']] === '待處理') { v[COL['狀態']] = '處理中'; }
@@ -526,7 +531,7 @@ function auditDecide(pin, id, decision, note) {
       v[COL['稽核']] = '退回補正'; v[COL['狀態']] = '處理中'; v[COL['完成時間']] = '';
     } else { throw new Error('稽核決定不正確'); }
     v[COL['稽核意見']] = n; v[COL['稽核時間']] = now_();
-    saveRow_(f, w.name || '校長', '稽核' + decision + (n ? '：' + n : ''));
+    saveRow_(f, w.name || '校長', `稽核${decision}${n ? `：${n}` : ''}`);
     return { ok: true };
   } finally { lock.releaseLock(); }
 }
@@ -534,9 +539,9 @@ function auditDecide(pin, id, decision, note) {
 /* 流水號：字號結尾是數字就從該數字往上加並維持位數（115001 → 115002）；否則在後面接三位序號 */
 function seqNo_(base, i) {
   const m = /^(.*?)(\d+)$/.exec(String(base || ''));
-  if (!m) { return String(base || '') + ('000' + (i + 1)).slice(-3); }
+  if (!m) { return String(base || '') + (`000${i + 1}`).slice(-3); }
   let s = String(Number(m[2]) + i);
-  while (s.length < m[2].length) { s = '0' + s; }
+  while (s.length < m[2].length) { s = `0${s}`; }
   return m[1] + s;
 }
 
@@ -547,43 +552,43 @@ function seqNo_(base, i) {
 function certRows_() {
   const cf = conf_(); const base = cf['獎狀字號'] || ''; const serial = cf['編號方式'] === '流水號';
   const ev = events_(); const rosterOf = {};
-  ev.relay.forEach(function (e) { rosterOf[e.name] = e.roster; });
+  ev.relay.forEach(e => { rosterOf[e.name] = e.roster; });
   const rows = [];
-  table_(SH.CASE).forEach(function (r) {
+  table_(SH.CASE).forEach(r => {
     if (!r[0]) { return; }
     let places = []; try { places = JSON.parse(r[COL['成績資料']] || '[]'); } catch (e) { places = []; }
     const event = r[COL['項目']]; const grade = event.charAt(0);
-    places.forEach(function (x) {
-      const add = function (kind, name, inSheet) {
+    places.forEach(x => {
+      const add = (kind, name, inSheet) => {
         rows.push({ kind: kind, inSheet: inSheet, caseId: r[0], status: r[COL['狀態']], event: event, rank: String(x.rank),
           grade: grade, clsNum: String(Number(String(x.cls).slice(1))), name: name, score: x.score || '' });
       };
       if (r[COL['類別']] === '接力') {
         const mem = (rosterOf[event] || {})[x.cls] || []; const seen = {};
-        const uniq = mem.filter(function (m) { const k = m.no + m.name; if (seen[k]) { return false; } seen[k] = true; return true; });
+        const uniq = mem.filter(m => { const k = m.no + m.name; if (seen[k]) { return false; } seen[k] = true; return true; });
         add('班級', '', uniq.length === 0);
-        uniq.forEach(function (m) { add('選手', m.name, true); });
+        uniq.forEach(m => { add('選手', m.name, true); });
       } else { add('個人', x.name, true); }
     });
   });
-  rows.forEach(function (o, i) {
+  rows.forEach((o, i) => {
     o.no = serial ? seqNo_(base, i) : base;
-    o.fullNo = o.no ? (cf['字號前綴'] || '') + o.no + '號' : '';
+    o.fullNo = o.no ? `${(cf['字號前綴'] || '') + o.no}號` : '';
   });
   return rows;
 }
 /* 獎狀最下方的頒獎日期：先用設定的「頒獎日期」，沒填就用「活動日期」，兩者都沒填則用產生獎狀當天，確保不會空白 */
 function awardDate_(cf) {
-  const pick = function (s) { return /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || '').trim()); };
+  const pick = s => /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || '').trim());
   const md = pick(cf['頒獎日期']) || pick(cf['活動日期']) || pick(String(Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd')).slice(0, 10));
-  const y = Number(md[1]), tail = Number(md[2]) + '月' + Number(md[3]) + '日';
-  return cf['頒獎日期格式'] === '西元' ? '西元' + y + '年' + tail : '中華民國' + (y - 1911) + '年' + tail;
+  const y = Number(md[1]), tail = `${Number(md[2])}月${Number(md[3])}日`;
+  return cf['頒獎日期格式'] === '西元' ? `西元${y}年${tail}` : `中華民國${y - 1911}年${tail}`;
 }
 function exportMerge(pin) {
   need_(pin, ['行政']);
   const ss = SpreadsheetApp.getActiveSpreadsheet(); const cf = conf_(); const awardDate = awardDate_(cf);
   const out = [['編號', '項目', '名次', '年', '班', '姓名', '成績', '案件編號', '案件狀態', '活動名稱', '頒發日期', '完整字號']];
-  certRows_().forEach(function (o) {
+  certRows_().forEach(o => {
     if (o.inSheet) { out.push([o.no, o.event, o.rank, o.grade, o.clsNum, o.name, o.score, o.caseId, o.status, cf['活動名稱'], awardDate, o.fullNo]); }
   });
   let sh = ss.getSheetByName(SH.MERGE);
@@ -592,8 +597,8 @@ function exportMerge(pin) {
   writeRows_(sh, 1, out);
   return {
     count: out.length - 1,
-    url: 'https://docs.google.com/spreadsheets/d/' + ss.getId() + '/export?format=xlsx&gid=' + sh.getSheetId(),
-    view: ss.getUrl() + '#gid=' + sh.getSheetId()
+    url: `https://docs.google.com/spreadsheets/d/${ss.getId()}/export?format=xlsx&gid=${sh.getSheetId()}`,
+    view: `${ss.getUrl()}#gid=${sh.getSheetId()}`
   };
 }
 
@@ -602,23 +607,32 @@ const CERT_TEMPLATE = {"parts":[["[Content_Types].xml","<?xml version=\"1.0\" en
 function getCertTemplate(pin) { need_(pin, ['行政']); return CERT_TEMPLATE; }
 function getCertificates(pin, caseId, kind) {
   need_(pin, ['行政']);
-  if (['個人', '選手', '班級'].indexOf(kind) < 0) { throw new Error('獎狀種類不正確'); }
+  if (!['個人', '選手', '班級'].includes(kind)) { throw new Error('獎狀種類不正確'); }
   const cf = conf_(); // caseId 可為單一編號、編號陣列，或空白（全部）
   const want = Array.isArray(caseId) ? caseId.map(String) : (String(caseId || '') ? [String(caseId)] : null);
-  const records = certRows_().filter(function (o) { return o.kind === kind && (!want || want.indexOf(o.caseId) >= 0); })
-    .map(function (o) { return { no: o.fullNo, event: o.event, rank: o.rank, grade: o.grade, clsNum: o.clsNum, name: o.name, score: o.score, caseId: o.caseId }; });
+  const records = certRows_().filter(o => o.kind === kind && (!want || want.includes(o.caseId)))
+    .map(o => ({ no: o.fullNo, event: o.event, rank: o.rank, grade: o.grade, clsNum: o.clsNum, name: o.name, score: o.score, caseId: o.caseId }));
   return { records: records, title: cf['活動名稱'] || '', date: awardDate_(cf), layout: certLayout_(cf) };
 }
 function certLayout_(cf) {
-  const n = function (k) { const x = Number(cf[k]); return isFinite(x) ? x : 0; };
+  const n = k => { const x = Number(cf[k]); return isFinite(x) ? x : 0; };
   return { top: n('獎狀上邊界微調'), bottom: n('獎狀下邊界微調'), left: n('獎狀左邊界微調'), right: n('獎狀右邊界微調'),
     dy: n('列印頁垂直位移'), dx: n('列印頁水平位移') };
 }
 /* 版面測試用的三張獎狀：一般、長項目名稱、長英文姓名 */
 function getCertSample(pin) {
   need_(pin, ['行政']); const cf = conf_();
-  const no = cf['獎狀字號'] ? (cf['字號前綴'] || '') + cf['獎狀字號'] + '號' : '';
-  const mk = function (event, name, score, rank) { return { no: no, event: event, rank: rank, grade: '五', clsNum: '3', name: name, score: score, caseId: '測試' }; };
+  const no = cf['獎狀字號'] ? `${(cf['字號前綴'] || '') + cf['獎狀字號']}號` : '';
+  const mk = (event, name, score, rank) => ({
+    no: no,
+    event: event,
+    rank: rank,
+    grade: '五',
+    clsNum: '3',
+    name: name,
+    score: score,
+    caseId: '測試'
+  });
   return {
     records: [mk('五年級100公尺男生組', '王小明', '15"32', '1'),
       mk('五年級四百公尺混合接力暨趣味競賽男女混合組', '歐陽司馬大明', '1分15秒32', '2'),
@@ -629,8 +643,8 @@ function getCertSample(pin) {
 
 /* ───────── 名冊管理（限行政） ───────── */
 function rosterRows_() {
-  return table_(SH.ROSTER).map(function (r) { return [0, 1, 2, 3, 4].map(function (i) { return String(r[i] || '').trim(); }); })
-    .filter(function (r) { return r[0] || r[1] || r[2]; });
+  return table_(SH.ROSTER).map(r => [0, 1, 2, 3, 4].map(i => String(r[i] || '').trim()))
+    .filter(r => r[0] || r[1] || r[2]);
 }
 function getRoster(pin) {
   need_(pin, ['行政']);
@@ -649,7 +663,7 @@ function rosterRow_(r, i) {
     if (no && !/^\d{1,2}$/.test(no)) { throw new Error('座號要填數字'); }
     const name = str_(r[4], 12, '姓名', false);
     return [type, ev, cls, no, name];
-  } catch (e) { throw new Error('第 ' + (i + 1) + ' 列：' + e.message); }
+  } catch (e) { throw new Error(`第 ${i + 1} 列：${e.message}`); }
 }
 function importRoster(pin, rows, mode) {
   need_(pin, ['行政']);
@@ -674,13 +688,13 @@ function importRoster(pin, rows, mode) {
 const CONF_EDIT = ['系統名稱', '學校名稱', '學年度', '活動名稱', '活動日期', '字號前綴', '獎狀字號', '編號方式', '逾時分鐘'].concat(MARGIN_KEYS, SHIFT_KEYS, ['頒獎日期', '頒獎日期格式', '檢錄員可更正', '檢錄通行碼']);
 function getSettings(pin) {
   need_(pin, ['行政']); const c = conf_(); const o = {};
-  CONF_EDIT.forEach(function (k) { o[k] = c[k]; });
+  CONF_EDIT.forEach(k => { o[k] = c[k]; });
   return { values: o };
 }
 function saveSettings(pin, input) {
   need_(pin, ['行政']); const given = input || {}; const cur = conf_();
   input = {}; // 沒有送來的項目維持原值，避免舊版頁面儲存時把新設定清空
-  CONF_EDIT.forEach(function (k) { input[k] = given[k] === undefined ? cur[k] : given[k]; });
+  CONF_EDIT.forEach(k => { input[k] = given[k] === undefined ? cur[k] : given[k]; });
   const v = {
     '系統名稱': str_(input['系統名稱'], 30, '系統名稱', true),
     '學校名稱': str_(input['學校名稱'], 30, '學校名稱', true),
@@ -692,34 +706,34 @@ function saveSettings(pin, input) {
     '編號方式': str_(input['編號方式'], 4, '編號方式', false) || '同一字號',
     '逾時分鐘': str_(input['逾時分鐘'], 3, '逾時分鐘', true)
   };
-  MARGIN_KEYS.forEach(function (k) {
+  MARGIN_KEYS.forEach(k => {
     const s = str_(input[k], 6, k, false) || '0';
-    if (!/^-?\d{1,2}(\.\d)?$/.test(s) || Number(s) < -20 || Number(s) > 30) { throw new Error(k + '請填 -20 到 30 之間的數字（單位公釐）'); }
+    if (!/^-?\d{1,2}(\.\d)?$/.test(s) || Number(s) < -20 || Number(s) > 30) { throw new Error(`${k}請填 -20 到 30 之間的數字（單位公釐）`); }
     v[k] = String(Number(s));
   });
   v['頒獎日期'] = str_(input['頒獎日期'], 10, '頒獎日期', false);
   if (v['頒獎日期'] && !/^\d{4}-\d{2}-\d{2}$/.test(v['頒獎日期'])) { throw new Error('頒獎日期格式不正確'); }
   v['頒獎日期格式'] = str_(input['頒獎日期格式'], 4, '頒獎日期格式', false) || '中華民國';
-  if (DATE_MODES.indexOf(v['頒獎日期格式']) < 0) { throw new Error('頒獎日期格式只能是「中華民國」或「西元」'); }
+  if (!DATE_MODES.includes(v['頒獎日期格式'])) { throw new Error('頒獎日期格式只能是「中華民國」或「西元」'); }
   v['檢錄員可更正'] = str_(input['檢錄員可更正'], 2, '檢錄員可更正', false) || '開啟';
-  if (['開啟', '關閉'].indexOf(v['檢錄員可更正']) < 0) { throw new Error('檢錄員可更正只能是「開啟」或「關閉」'); }
+  if (!['開啟', '關閉'].includes(v['檢錄員可更正'])) { throw new Error('檢錄員可更正只能是「開啟」或「關閉」'); }
   v['檢錄通行碼'] = str_(input['檢錄通行碼'], 20, '檢錄通行碼', false);
   if (/\s/.test(v['檢錄通行碼'])) { throw new Error('檢錄通行碼不能含空白'); }
-  SHIFT_KEYS.forEach(function (k) {
+  SHIFT_KEYS.forEach(k => {
     const s = str_(input[k], 6, k, false) || '0';
-    if (!/^-?\d{1,2}(\.\d)?$/.test(s) || Math.abs(Number(s)) > 20) { throw new Error(k + '請填 -20 到 20 之間的數字（單位公釐）'); }
+    if (!/^-?\d{1,2}(\.\d)?$/.test(s) || Math.abs(Number(s)) > 20) { throw new Error(`${k}請填 -20 到 20 之間的數字（單位公釐）`); }
     v[k] = String(Number(s));
   });
   if (!/^\d{2,3}$/.test(v['學年度'])) { throw new Error('學年度請填數字，例如 115'); }
-  if (NO_MODES.indexOf(v['編號方式']) < 0) { throw new Error('編號方式只能是「同一字號」或「流水號」'); }
+  if (!NO_MODES.includes(v['編號方式'])) { throw new Error('編號方式只能是「同一字號」或「流水號」'); }
   if (v['活動日期'] && !/^\d{4}-\d{2}-\d{2}$/.test(v['活動日期'])) { throw new Error('活動日期格式不正確'); }
   if (!/^\d{1,3}$/.test(v['逾時分鐘']) || Number(v['逾時分鐘']) < 1 || Number(v['逾時分鐘']) > 240) { throw new Error('逾時分鐘請填 1 到 240'); }
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const sh = sheet_(SH.CONF); const rows = table_(SH.CONF); const at = {};
-    rows.forEach(function (r, i) { at[r[0]] = i + 2; });
+    rows.forEach((r, i) => { at[r[0]] = i + 2; });
     let next = sh.getLastRow() + 1;
-    CONF_EDIT.forEach(function (k) {
+    CONF_EDIT.forEach(k => {
       if (at[k]) { writeRows_(sh, at[k], [[k, v[k]]]); } else { writeRows_(sh, next++, [[k, v[k]]]); }
     });
     CONF_CACHE_ = null;
@@ -738,16 +752,16 @@ function writeRoster_(rows) { const sh = sheet_(SH.ROSTER); sh.clearContents(); 
 function addEvent(pin, type, name, classes) {
   need_(pin, ['行政']); type = evType_(type); const n = evName_(name);
   if (!Array.isArray(classes) || classes.length < 1 || classes.length > 20) { throw new Error('請填寫參賽班級代碼'); }
-  const seen = {}; const add = classes.map(function (c) {
+  const seen = {}; const add = classes.map(c => {
     const cls = str_(c, 3, '班級', true);
-    if (!/^[1-6]\d{2}$/.test(cls) || cls.charAt(0) !== GRADE_NUM[n.charAt(0)]) { throw new Error('班級 ' + cls + ' 與項目年級不符'); }
-    if (seen[cls]) { throw new Error('班級重複：' + cls); } seen[cls] = true;
+    if (!/^[1-6]\d{2}$/.test(cls) || cls.charAt(0) !== GRADE_NUM[n.charAt(0)]) { throw new Error(`班級 ${cls} 與項目年級不符`); }
+    if (seen[cls]) { throw new Error(`班級重複：${cls}`); } seen[cls] = true;
     return [type, n, cls, '', ''];
   });
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const rows = rosterRows_();
-    if (rows.some(function (r) { return r[0] === type && r[1] === n; })) { throw new Error('已有同名項目：' + n); }
+    if (rows.some(r => r[0] === type && r[1] === n)) { throw new Error(`已有同名項目：${n}`); }
     writeRoster_(rows.concat(add));
     return { ok: true };
   } finally { lock.releaseLock(); }
@@ -759,17 +773,17 @@ function renameEvent(pin, type, oldName, newName) {
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const rows = rosterRows_(); let nr = 0, nc = 0;
-    if (rows.some(function (r) { return r[0] === type && r[1] === n; })) { throw new Error('已有同名項目：' + n); }
-    rows.forEach(function (r) { if (r[0] === type && r[1] === o) { r[1] = n; nr++; } });
-    if (!nr) { throw new Error('找不到項目：' + o); }
+    if (rows.some(r => r[0] === type && r[1] === n)) { throw new Error(`已有同名項目：${n}`); }
+    rows.forEach(r => { if (r[0] === type && r[1] === o) { r[1] = n; nr++; } });
+    if (!nr) { throw new Error(`找不到項目：${o}`); }
     writeRoster_(rows);
     const sh = sheet_(SH.CASE); const last = sh.getLastRow();
     if (last >= 2) {
       const all = sh.getRange(2, 1, last - 1, CASE_H.length).getDisplayValues();
-      all.forEach(function (v, i) {
+      all.forEach((v, i) => {
         if (v[0] && v[COL['類別']] === type && v[COL['項目']] === o) {
           v[COL['項目']] = n; nc++;
-          saveRow_({ sh: sh, row: i + 2, values: v }, w.name || '行政', '項目改名：' + o + ' → ' + n);
+          saveRow_({ sh: sh, row: i + 2, values: v }, w.name || '行政', `項目改名：${o} → ${n}`);
         }
       });
     }
@@ -780,8 +794,8 @@ function deleteEvent(pin, type, name) {
   need_(pin, ['行政']); type = evType_(type);
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    const rows = rosterRows_(); const keep = rows.filter(function (r) { return !(r[0] === type && r[1] === String(name)); });
-    if (keep.length === rows.length) { throw new Error('找不到項目：' + name); }
+    const rows = rosterRows_(); const keep = rows.filter(r => !(r[0] === type && r[1] === String(name)));
+    if (keep.length === rows.length) { throw new Error(`找不到項目：${name}`); }
     writeRoster_(keep);
     return { ok: true, removed: rows.length - keep.length };
   } finally { lock.releaseLock(); }
@@ -791,14 +805,14 @@ function moveEvent(pin, type, name, dir) {
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const rows = rosterRows_(); const order = []; const group = {};
-    rows.forEach(function (r) { const k = r[0] + '|' + r[1]; if (!group[k]) { group[k] = []; order.push(k); } group[k].push(r); });
-    const same = order.filter(function (k) { return k.indexOf(type + '|') === 0; });
-    const i = same.indexOf(type + '|' + name); const j = i + (dir === 'up' ? -1 : 1);
-    if (i < 0) { throw new Error('找不到項目：' + name); }
+    rows.forEach(r => { const k = `${r[0]}|${r[1]}`; if (!group[k]) { group[k] = []; order.push(k); } group[k].push(r); });
+    const same = order.filter(k => k.startsWith(`${type}|`));
+    const i = same.indexOf(`${type}|${name}`); const j = i + (dir === 'up' ? -1 : 1);
+    if (i < 0) { throw new Error(`找不到項目：${name}`); }
     if (j < 0 || j >= same.length) { return { ok: true, moved: false }; }
     const a = order.indexOf(same[i]), b = order.indexOf(same[j]);
     order[a] = same[j]; order[b] = same[i];
-    let out = []; order.forEach(function (k) { out = out.concat(group[k]); });
+    let out = []; order.forEach(k => { out = out.concat(group[k]); });
     writeRoster_(out);
     return { ok: true, moved: true };
   } finally { lock.releaseLock(); }
@@ -808,14 +822,14 @@ function moveEvent(pin, type, name, dir) {
 function addEventClass(pin, type, name, cls) {
   need_(pin, ['行政']); type = evType_(type); const n = String(name || '');
   const c = str_(cls, 3, '班級代碼', true);
-  if (!/^[1-6]\d{2}$/.test(c) || c.charAt(0) !== GRADE_NUM[n.charAt(0)]) { throw new Error('班級 ' + c + ' 與項目年級不符'); }
+  if (!/^[1-6]\d{2}$/.test(c) || c.charAt(0) !== GRADE_NUM[n.charAt(0)]) { throw new Error(`班級 ${c} 與項目年級不符`); }
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const rows = rosterRows_(); let last = -1;
-    rows.forEach(function (r, i) {
-      if (r[0] === type && r[1] === n) { last = i; if (r[2] === c) { throw new Error('這個項目已經有 ' + c + ' 班'); } }
+    rows.forEach((r, i) => {
+      if (r[0] === type && r[1] === n) { last = i; if (r[2] === c) { throw new Error(`這個項目已經有 ${c} 班`); } }
     });
-    if (last < 0) { throw new Error('找不到項目：' + n); }
+    if (last < 0) { throw new Error(`找不到項目：${n}`); }
     rows.splice(last + 1, 0, [type, n, c, '', '']); // 接在該項目最後一列之後，維持項目順序
     writeRoster_(rows);
     return { ok: true };
@@ -826,10 +840,10 @@ function deleteEventClass(pin, type, name, cls) {
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const rows = rosterRows_();
-    const mine = rows.filter(function (r) { return r[0] === type && r[1] === n; });
-    const keep = rows.filter(function (r) { return !(r[0] === type && r[1] === n && r[2] === c); });
+    const mine = rows.filter(r => r[0] === type && r[1] === n);
+    const keep = rows.filter(r => !(r[0] === type && r[1] === n && r[2] === c));
     const removed = rows.length - keep.length;
-    if (!removed) { throw new Error('這個項目沒有 ' + c + ' 班'); }
+    if (!removed) { throw new Error(`這個項目沒有 ${c} 班`); }
     if (removed === mine.length) { throw new Error('這是此項目最後一個班級。要整個移除請改用「刪除」項目'); }
     writeRoster_(keep);
     return { ok: true, removed: removed };
@@ -843,7 +857,7 @@ function backupCases_(rows, who, how) {
   if (!sh) { sh = ss.insertSheet(SH.BACKUP); }
   if (sh.getLastRow() === 0) { writeRows_(sh, 1, [['刪除時間', '刪除者', '方式'].concat(CASE_H)]); sh.setFrozenRows(1); }
   const t = now_();
-  writeRows_(sh, sh.getLastRow() + 1, rows.map(function (r) { return [t, who, how].concat(r.slice(0, CASE_H.length)); }));
+  writeRows_(sh, sh.getLastRow() + 1, rows.map(r => [t, who, how].concat(r.slice(0, CASE_H.length))));
 }
 function rewriteCases_(keep, total) { // 以「清除內容再寫回」的方式刪列，避免刪到凍結列以外的最後一列時出錯
   const sh = sheet_(SH.CASE);
@@ -858,10 +872,10 @@ function deleteCase(pin, id) {
   const w = need_(pin, ['行政']); const target = String(id || '');
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    const all = caseRows_(); const gone = all.filter(function (r) { return r[0] === target; });
-    if (!target || !gone.length) { throw new Error('找不到案件 ' + target); }
+    const all = caseRows_(); const gone = all.filter(r => r[0] === target);
+    if (!target || !gone.length) { throw new Error(`找不到案件 ${target}`); }
     backupCases_(gone, w.name || '行政', '單筆刪除');
-    rewriteCases_(all.filter(function (r) { return r[0] && r[0] !== target; }), all.length);
+    rewriteCases_(all.filter(r => r[0] && r[0] !== target), all.length);
     return { ok: true, removed: gone.length };
   } finally { lock.releaseLock(); }
 }
@@ -869,8 +883,8 @@ function clearCases(pin, expected) {
   const w = need_(pin, ['行政']);
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    const all = caseRows_(); const real = all.filter(function (r) { return r[0]; });
-    if (Number(expected) !== real.length) { throw new Error('案件數量已變動（目前 ' + real.length + ' 筆），請重新下載資料後再清空'); }
+    const all = caseRows_(); const real = all.filter(r => r[0]);
+    if (Number(expected) !== real.length) { throw new Error(`案件數量已變動（目前 ${real.length} 筆），請重新下載資料後再清空`); }
     backupCases_(real, w.name || '行政', '全部清空');
     rewriteCases_([], all.length);
     setConf_('案件流水號', '0'); // 清空後編號從 R001 重新開始
@@ -880,14 +894,14 @@ function clearCases(pin, expected) {
 }
 
 /* ───────── 匯入案件資料（限行政）：格式與下載的 CSV 相同 ───────── */
-function pad2_(v) { return ('0' + Number(v)).slice(-2); }
-function normDate_(s) { const m = /^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/.exec(String(s || '').trim()); return m ? m[1] + '-' + pad2_(m[2]) + '-' + pad2_(m[3]) : null; }
-function normTime_(s) { const m = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(String(s || '').trim()); return m && Number(m[1]) < 24 && Number(m[2]) < 60 ? pad2_(m[1]) + ':' + m[2] : null; }
+function pad2_(v) { return (`0${Number(v)}`).slice(-2); }
+function normDate_(s) { const m = /^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/.exec(String(s || '').trim()); return m ? `${m[1]}-${pad2_(m[2])}-${pad2_(m[3])}` : null; }
+function normTime_(s) { const m = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(String(s || '').trim()); return m && Number(m[1]) < 24 && Number(m[2]) < 60 ? `${pad2_(m[1])}:${m[2]}` : null; }
 function normStamp_(s, label) { // 空白回傳空字串；格式不對則丟出錯誤
   const v = String(s || '').trim(); if (!v) { return ''; }
   const m = /^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(v);
-  if (!m) { throw new Error(label + '格式不正確（應為 2026-11-21 09:30:00）'); }
-  return m[1] + '-' + pad2_(m[2]) + '-' + pad2_(m[3]) + ' ' + pad2_(m[4]) + ':' + m[5] + ':' + pad2_(m[6] || 0);
+  if (!m) { throw new Error(`${label}格式不正確（應為 2026-11-21 09:30:00）`); }
+  return `${m[1]}-${pad2_(m[2])}-${pad2_(m[3])} ${pad2_(m[4])}:${m[5]}:${pad2_(m[6] || 0)}`;
 }
 function importCases(pin, items, dryRun) {
   const w = need_(pin, ['行政']);
@@ -895,19 +909,19 @@ function importCases(pin, items, dryRun) {
   if (items.length > 500) { throw new Error('一次最多匯入 500 筆'); }
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    const ev = events_(); const all = caseRows_(); const existing = all.filter(function (r) { return r[0]; });
+    const ev = events_(); const all = caseRows_(); const existing = all.filter(r => r[0]);
     const used = {}; let max = Number(conf_()['案件流水號']) || 0;
-    existing.forEach(function (r) { used[r[0]] = true; const m = /^R(\d+)$/.exec(r[0]); if (m) { max = Math.max(max, Number(m[1])); } });
+    existing.forEach(r => { used[r[0]] = true; const m = /^R(\d+)$/.exec(r[0]); if (m) { max = Math.max(max, Number(m[1])); } });
     const errors = []; const rows = []; const stamp = now_();
-    items.forEach(function (it, i) {
+    items.forEach((it, i) => {
       try {
         it = it || {};
         const t0 = String(it.type || '').trim();
-        const type = ['個人', '個人單項', '個人單項競賽'].indexOf(t0) >= 0 ? '個人' : ['接力', '大隊接力'].indexOf(t0) >= 0 ? '接力' : null;
+        const type = ['個人', '個人單項', '個人單項競賽'].includes(t0) ? '個人' : ['接力', '大隊接力'].includes(t0) ? '接力' : null;
         if (!type) { throw new Error('類別要填「個人單項」或「大隊接力」'); }
         const evName = str_(it.event, 30, '項目', true);
-        const e = (type === '接力' ? ev.relay : ev.individual).filter(function (x) { return x.name === evName; })[0];
-        if (!e) { throw new Error('項目「' + evName + '」不在目前的比賽項目裡'); }
+        const e = (type === '接力' ? ev.relay : ev.individual).filter(x => x.name === evName)[0];
+        if (!e) { throw new Error(`項目「${evName}」不在目前的比賽項目裡`); }
         const date = normDate_(it.date); const time = normTime_(it.time);
         if (!date) { throw new Error('比賽日期格式不正確（應為 2026-11-21）'); }
         if (!time) { throw new Error('比賽時間格式不正確（應為 09:30）'); }
@@ -916,18 +930,20 @@ function importCases(pin, items, dryRun) {
         const id = str_(it.id, 8, '案件編號', false);
         if (id) {
           if (!/^R\d{3,6}$/.test(id)) { throw new Error('案件編號格式不正確（例如 R001，或留空由系統編號）'); }
-          if (used[id]) { throw new Error('案件編號 ' + id + ' 已存在或在檔案中重複'); }
+          if (used[id]) { throw new Error(`案件編號 ${id} 已存在或在檔案中重複`); }
           used[id] = true;
         }
         const status = str_(it.status, 5, '狀態', false) || '待處理';
-        if (STATUS.indexOf(status) < 0) { throw new Error('狀態只能是待處理、處理中、已完成'); }
+        if (!STATUS.includes(status)) { throw new Error('狀態只能是待處理、處理中、已完成'); }
         const audit = str_(it.audit, 5, '稽核', false);
-        if (['', '已核可', '退回補正'].indexOf(audit) < 0) { throw new Error('稽核只能是空白、已核可、退回補正'); }
-        const log = (Array.isArray(it.log) ? it.log : []).slice(0, 200).map(function (l) {
-          return { t: String((l || {}).t || '').slice(0, 19), by: String((l || {}).by || '').slice(0, 20), what: String((l || {}).what || '').slice(0, 600) };
-        }).filter(function (l) { return l.what; });
+        if (!['', '已核可', '退回補正'].includes(audit)) { throw new Error('稽核只能是空白、已核可、退回補正'); }
+        const log = (Array.isArray(it.log) ? it.log : []).slice(0, 200).map(l => ({
+          t: String((l || {}).t || '').slice(0, 19),
+          by: String((l || {}).by || '').slice(0, 20),
+          what: String((l || {}).what || '').slice(0, 600)
+        })).filter(l => l.what);
         log.push({ t: stamp, by: w.name || '行政', what: '由檔案匯入' });
-        const row = CASE_H.map(function () { return ''; });
+        const row = CASE_H.map(() => '');
         row[COL['案件編號']] = id; row[COL['送出時間']] = normStamp_(it.at, '送出時間') || stamp;
         row[COL['類別']] = type; row[COL['項目']] = evName; row[COL['比賽日期']] = date; row[COL['比賽時間']] = time;
         row[COL['檢錄員']] = recorder; row[COL['急件']] = String(it.urgent || '').trim() === '是' ? '是' : '否';
@@ -938,11 +954,11 @@ function importCases(pin, items, dryRun) {
         row[COL['成績資料']] = JSON.stringify(places); row[COL['處理紀錄']] = JSON.stringify(log);
         row[COL['列印時間']] = normStamp_(it.printedAt, '列印時間');
         rows.push(row);
-      } catch (err) { errors.push('第 ' + (i + 2) + ' 列：' + err.message); }
+      } catch (err) { errors.push(`第 ${i + 2} 列：${err.message}`); }
     });
     if (errors.length || dryRun) { return { ok: !errors.length, count: rows.length, errorCount: errors.length, errors: errors.slice(0, 30) }; }
-    rows.forEach(function (r) { const m = /^R(\d+)$/.exec(r[0]); if (m) { max = Math.max(max, Number(m[1])); } });
-    rows.forEach(function (r) { if (!r[0]) { max++; r[0] = 'R' + (max < 1000 ? ('000' + max).slice(-3) : String(max)); } });
+    rows.forEach(r => { const m = /^R(\d+)$/.exec(r[0]); if (m) { max = Math.max(max, Number(m[1])); } });
+    rows.forEach(r => { if (!r[0]) { max++; r[0] = `R${max < 1000 ? (`000${max}`).slice(-3) : String(max)}`; } });
     rewriteCases_(existing.concat(rows), all.length);
     setConf_('案件流水號', String(max));
     return { ok: true, count: rows.length, errorCount: 0, errors: [] };
