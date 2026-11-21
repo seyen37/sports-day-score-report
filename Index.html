@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<!--
+  體育表演會 成績回報系統（介面）
+  設計者：臺北市福林國小 許士彥 2026.11.21.
+-->
+<head>
+<meta charset="utf-8">
+<base target="_top">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>體表會成績回報系統</title>
+<style>
+:root{--bg:#f3f5f2;--card:#fff;--ink:#16211c;--mute:#5b6a63;--line:#d5dcd7;--pri:#0b5d4b;--pri-ink:#fff;--pri-soft:#e2f1ec;--red:#b3261e;--red-soft:#fde8e6;--amber:#8a5a00;--amber-soft:#fff1d1;--blue:#1d4f91;--blue-soft:#e3edfa;--ok:#1b6b3a;--ok-soft:#e1f3e7}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;-webkit-text-size-adjust:100%}
+header{background:var(--pri);color:var(--pri-ink);padding:12px 16px 0;position:sticky;top:0;z-index:5}
+header .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h1{font-size:18px;margin:0;font-weight:700}
+#ver{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:rgba(255,255,255,.2);font-size:12px;font-weight:600;vertical-align:middle;white-space:nowrap}
+header small{display:block;font-size:12px;opacity:.85;font-weight:400}
+#whoBtn{background:rgba(255,255,255,.16);color:#fff;border:0;border-radius:999px;padding:8px 12px;font-size:13px;white-space:nowrap}
+nav{display:flex;gap:2px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:0 0 auto;background:none;border:0;color:#fff;opacity:.75;font-size:15px;padding:10px 12px;border-bottom:3px solid transparent;white-space:nowrap}
+nav button[aria-selected=true]{opacity:1;font-weight:700;border-bottom-color:#fff}
+main{max-width:720px;margin:0 auto;padding:14px 14px 80px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+label.f{display:block;font-weight:600;font-size:15px;margin:14px 0 6px}
+label.f:first-child{margin-top:0}
+.req::after{content:" *";color:var(--red)}
+input[type=text],input[type=date],input[type=time],input[type=password],input[type=search],select,textarea{width:100%;min-height:48px;padding:10px 12px;border:1.5px solid #9aa8a1;border-radius:10px;font:inherit;background:#fff;color:var(--ink)}
+textarea{min-height:88px;resize:vertical}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #7fc4b0;outline-offset:1px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{min-height:52px;border:1.5px solid #9aa8a1;background:#fff;border-radius:10px;font:inherit;font-weight:600;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--pri);border-color:var(--pri);color:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+fieldset{border:1.5px solid var(--line);border-radius:12px;margin:14px 0 0;padding:10px 12px 14px;min-width:0}
+legend{font-weight:700;padding:0 6px;font-size:16px}
+legend span{font-weight:400;color:var(--mute);font-size:13px}
+.score{display:flex;align-items:center;gap:6px}
+.score input{width:84px;text-align:center;font-size:18px}
+.score b{font-weight:600}
+.check{display:flex;align-items:center;gap:10px;min-height:48px;margin-top:14px;font-weight:600}
+.check input{width:24px;height:24px;accent-color:var(--red)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 16px;border-radius:10px;border:1.5px solid var(--pri);background:#fff;color:var(--pri);font:inherit;font-weight:600;text-decoration:none}
+.btn.pri{background:var(--pri);color:#fff}
+.btn.danger{border-color:var(--red);color:var(--red)}
+.btn.block{display:flex;width:100%}
+.btn.big{min-height:56px;font-size:18px;margin-top:18px}
+.btn:disabled{opacity:.5}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btns .btn{flex:1 1 140px}
+.photo img{display:block;max-width:100%;max-height:260px;border-radius:10px;border:1px solid var(--line);margin-bottom:8px}
+.err{background:var(--red-soft);color:var(--red);border-radius:10px;padding:10px 12px;margin-top:12px;font-weight:600}
+.hint{color:var(--mute);font-size:13px;margin:4px 0 0}
+.chip{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 10px;margin-right:4px;white-space:nowrap}
+.s-待處理{background:var(--amber-soft);color:var(--amber)}
+.s-處理中{background:var(--blue-soft);color:var(--blue)}
+.s-已完成{background:var(--ok-soft);color:var(--ok)}
+.c-urgent,.c-over{background:var(--red-soft);color:var(--red)}
+.c-audit{background:var(--pri-soft);color:var(--pri)}
+.c-fix{background:#efe6fb;color:#5a2d91}
+.certlab{margin:12px 0 6px;font-weight:600;font-size:15px}
+.mvbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+.steps{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 6px}
+.steps span{font-size:12.5px;padding:2px 8px;border-radius:6px;background:#eef1ef;color:#7a8780;white-space:nowrap}
+.steps span.on{background:var(--ok-soft);color:var(--ok);font-weight:700}
+.steps span.now{background:var(--amber-soft);color:var(--amber);font-weight:700}
+.evpick{display:flex;flex-direction:column;gap:2px;max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-top:8px}
+.evpick label{display:flex;align-items:center;gap:8px;min-height:40px;font-size:15px}
+.evpick input{width:20px;height:20px}
+.note{background:var(--amber-soft);color:#5a3b00;border-radius:10px;padding:10px 12px;margin-top:8px;font-size:14.5px}
+.note .btn.sm{background:#fff}
+.case{display:block;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.case.urgent{border-left:6px solid var(--red)}
+.case h3{margin:6px 0 4px;font-size:17px}
+.case .meta{color:var(--mute);font-size:13px}
+.places{margin:6px 0 0;padding:0;list-style:none}
+.places li{padding:2px 0}
+.places b{display:inline-block;min-width:4.2em}
+.filters{display:flex;gap:6px;overflow-x:auto;margin:10px 0}
+.filters button{flex:0 0 auto;min-height:40px;padding:6px 12px;border-radius:999px;border:1.5px solid #9aa8a1;background:#fff;font:inherit;font-size:14px;color:var(--ink)}
+.filters button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.empty{text-align:center;color:var(--mute);padding:36px 12px}
+.done{text-align:center}
+.done .tick{width:64px;height:64px;border-radius:50%;background:var(--ok);color:#fff;font-size:36px;line-height:64px;margin:6px auto 8px}
+.done .num{font-size:44px;font-weight:800;letter-spacing:2px;color:var(--pri);margin:4px 0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stats div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.stats b{display:block;font-size:26px}
+.stats .bad b{color:var(--red)}
+h2.sec{font-size:15px;color:var(--mute);margin:18px 2px 8px}
+.mc h3{font-size:22px}
+.mc .places li{font-size:20px;padding:6px 0;border-top:1px dashed var(--line)}
+.mc .places .sc{font-weight:700}
+.mc.said{opacity:.6}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+#modal[hidden]{display:none}
+#sheet{background:#fff;width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px 28px}
+#sheet .x{float:right;border:0;background:#eef1ef;border-radius:50%;width:40px;height:40px;font-size:20px}
+.log{margin:6px 0 0;padding:0;list-style:none;font-size:14px}
+.log li{border-left:3px solid var(--line);padding:2px 0 8px 10px}
+.log time{color:var(--mute);font-size:12.5px;display:block}
+dl{margin:8px 0;display:grid;grid-template-columns:5.5em 1fr;gap:4px 8px;font-size:15px}
+dt{color:var(--mute)}dd{margin:0}
+details summary{cursor:pointer;min-height:32px;font-size:16px}
+.rrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 8px;padding:8px 0;border-top:1px dashed var(--line)}
+.rrow>span:first-child{flex:1 1 11em}
+.rrow>span:last-child{white-space:nowrap}
+.btn.sm{min-height:40px;padding:6px 12px;font-size:14px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#16211c;color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:90vw}
+#toast[hidden]{display:none}
+.bar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:8px}
+.bar span{font-size:13px;color:var(--mute)}
+@media (min-width:600px){#modal{align-items:center}#sheet{border-radius:16px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1><span id="appName">體表會成績回報系統</span><span id="ver"></span><small id="sub"></small></h1>
+    <button id="whoBtn" type="button">身分登入</button>
+  </div>
+  <nav id="nav" role="tablist">
+    <button data-tab="report" role="tab">成績填報</button>
+    <button data-tab="mine" role="tab">我的回報</button>
+    <button data-tab="progress" role="tab">進度查詢</button>
+    <button data-tab="admin" role="tab">列印作業</button>
+    <button data-tab="mc" role="tab">司儀播報</button>
+    <button data-tab="audit" role="tab">頒發獎狀</button>
+    <button data-tab="roster" role="tab">名冊管理</button>
+    <button data-tab="settings" role="tab">系統設定</button>
+  </nav>
+</header>
+<main id="main"><div class="empty">載入中…</div></main>
+<div id="modal" hidden><div id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="toast" hidden role="status"></div>
+
+<script>
+'use strict';
+var APP_VERSION = 'v1.20.2'; // 介面版本，改版時與 Code.gs 的 VERSION 一起更新
+document.getElementById('ver').textContent = APP_VERSION;
+var S = { boot: null, cases: [], who: { roles: [], name: '', email: '' }, tab: 'report', type: '個人', certScope: 'unprinted', certEvents: {},
+  photo: '', done: null, q: '', filter: '全部', loadedAt: '', busy: false };
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+var store = {
+  get: function (k) { try { return localStorage.getItem('fl_' + k) || ''; } catch (e) { return ''; } },
+  set: function (k, v) { try { localStorage.setItem('fl_' + k, v); } catch (e) { /* 無法儲存時略過 */ } }
+};
+function call(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function (ok, no) {
+    var r = google.script.run.withSuccessHandler(ok).withFailureHandler(function (e) { no(new Error((e && e.message) || String(e))); });
+    r[fn].apply(r, args);
+  });
+}
+function toast(msg) { var t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, 2600); }
+var NUM = { '1': '一', '2': '二', '3': '三' };
+function clsLabel(c) { var g = { '1': '一', '2': '二', '3': '三', '4': '四', '5': '五', '6': '六' }[String(c).charAt(0)] || ''; return g + '年' + Number(String(c).slice(1)) + '班'; }
+function has(role) { return S.who.roles.indexOf(role) >= 0; }
+function twNow() {
+  var p = {}; new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+    .formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
+  return { date: p.year + '-' + p.month + '-' + p.day, time: (p.hour === '24' ? '00' : p.hour) + ':' + p.minute };
+}
+
+/* ───────── 啟動與資料更新 ───────── */
+function start() {
+  call('getBootstrap', store.get('pin')).then(function (b) {
+    S.boot = b; S.who = b.who; applyHeader(); renderWho(); show(S.tab);
+    refresh(true);
+  }).catch(function (e) { $('#main').innerHTML = '<div class="err">載入失敗：' + esc(e.message) + '</div>'; });
+}
+function refresh(silent) {
+  return call('listCases', store.get('pin')).then(function (r) {
+    S.cases = r.cases; S.who = r.who; S.loadedAt = r.now; S.mcOrder = r.mcOrder || []; if (S.boot) { S.boot.allowRevise = r.allowRevise !== false; } renderWho();
+    if (S.tab !== 'report' && S.tab !== 'roster' && S.tab !== 'settings' && $('#modal').hidden) { show(S.tab); }
+  }).catch(function (e) { if (!silent) { toast('更新失敗：' + e.message); } });
+}
+setInterval(function () { if (!document.hidden && S.boot && S.tab !== 'roster' && S.tab !== 'settings' && $('#modal').hidden) { refresh(true); } }, 20000);
+function renderWho() { $('#whoBtn').textContent = S.who.roles.length ? S.who.roles.join('、') + '｜登出' : '身分登入'; }
+$('#whoBtn').addEventListener('click', function () {
+  if (S.who.roles.length && store.get('pin')) { store.set('pin', ''); refresh().then(function () { toast('已登出'); show(S.tab); }); }
+  else { pinDialog(); }
+});
+$('#nav').addEventListener('click', function (e) { var b = e.target.closest('button[data-tab]'); if (b) { S.q = ''; S.filter = '全部'; show(b.dataset.tab); } });
+function show(tab) {
+  S.tab = tab;
+  $$('#nav button').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === tab)); });
+  var keep = document.activeElement && document.activeElement.id === 'q';
+  ({ report: viewReport, mine: viewMine, progress: viewProgress, mc: viewMc, admin: viewAdmin, audit: viewAudit, roster: viewRoster, settings: viewSettings })[tab]();
+  if (keep && $('#q')) { var q = $('#q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+}
+
+/* ───────── 身分登入 ───────── */
+function pinDialog(after) {
+  openSheet('<h2>身分登入</h2><p class="hint">獎狀列印、司儀、校長請輸入各自的通行碼。檢錄員填報不需要登入。</p>' +
+    '<label class="f" for="pin">通行碼</label><input id="pin" type="password" inputmode="numeric" autocomplete="off">' +
+    '<div id="pinErr"></div><button class="btn pri block big" id="pinGo" type="button">登入</button>');
+  $('#pin').focus();
+  $('#pinGo').addEventListener('click', function () {
+    var p = $('#pin').value.trim(); if (!p) { return; }
+    this.disabled = true; var btn = this;
+    call('listCases', p).then(function (r) {
+      if (!r.who.roles.length) { $('#pinErr').innerHTML = '<div class="err">通行碼不正確</div>'; btn.disabled = false; return; }
+      store.set('pin', p); S.cases = r.cases; S.who = r.who; renderWho(); closeSheet(); toast('已登入：' + r.who.roles.join('、')); show(S.tab);
+      if (after) { after(); }
+    }).catch(function (e) { $('#pinErr').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; btn.disabled = false; });
+  });
+}
+function gate(role, label) {
+  if (has(role)) { return false; }
+  $('#main').innerHTML = '<div class="card"><h2 style="margin-top:0">' + esc(label) + '</h2><p>此頁面限「' + esc(role) + '」身分使用。</p>' +
+    '<button class="btn pri block" id="gateBtn" type="button">輸入通行碼</button></div>';
+  $('#gateBtn').addEventListener('click', function () { pinDialog(); });
+  return true;
+}
+
+/* ───────── 成績填報 ───────── */
+function viewReport() {
+  if (S.done) { return viewDone(); }
+  var now = twNow();
+  $('#main').innerHTML = '<form id="f" class="card" novalidate>' +
+    '<label class="f">比賽類別</label><div class="seg" id="seg">' +
+    '<button type="button" data-type="個人">個人單項競賽</button><button type="button" data-type="接力">大隊接力</button></div>' +
+    '<label class="f req" for="recorder">檢錄員姓名</label><input id="recorder" type="text" maxlength="20" autocomplete="name" value="' + esc(store.get('name')) + '">' +
+    '<label class="f req" for="event">項目</label><select id="event"></select><div id="dupBox" data-state=""></div>' +
+    '<div class="row2"><div><label class="f req" for="date">日期</label><input id="date" type="date" value="' + now.date + '"></div>' +
+    '<div><label class="f req" for="time">時間</label><input id="time" type="time" value="' + now.time + '"></div></div>' +
+    '<div id="places"></div>' +
+    '<label class="check"><input id="urgent" type="checkbox">急件（請優先處理）</label>' +
+    '<label class="f">現場照片（選填）</label><div class="photo" id="photo"></div>' +
+    '<input id="cam" type="file" accept="image/*" capture="environment" hidden><input id="pick" type="file" accept="image/*" hidden>' +
+    '<div id="formErr"></div><button class="btn pri block big" id="send" type="submit">送出成績</button></form>';
+  $('#seg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) { S.type = b.dataset.type; fillEvents(); } });
+  $('#event').addEventListener('change', onEventChange);
+  bindOther($('#places'));
+  $('#cam').addEventListener('change', onPhoto); $('#pick').addEventListener('change', onPhoto);
+  $('#f').addEventListener('submit', function (e) { e.preventDefault(); submit(false); });
+  fillEvents(); renderPhoto();
+}
+function evList() { return S.type === '接力' ? S.boot.relay : S.boot.individual; }
+function fillEvents() {
+  $$('#seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.type === S.type)); });
+  var groups = {}; var order = [];
+  evList().forEach(function (e) { if (!groups[e.grade]) { groups[e.grade] = []; order.push(e.grade); } groups[e.grade].push(e); });
+  $('#event').innerHTML = '<option value="">請選擇項目</option>' + order.map(function (g) {
+    return '<optgroup label="' + g + '年級">' + groups[g].map(function (e) { return '<option>' + esc(e.name) + '</option>'; }).join('') + '</optgroup>';
+  }).join('');
+  onEventChange();
+}
+function curEvent() { var n = $('#event').value; return evList().filter(function (e) { return e.name === n; })[0]; }
+function placeFieldsHtml(e, type) {
+  var html = '';
+  [1, 2, 3].forEach(function (rank) {
+    var opt = rank === 1 ? '' : ' <span>（沒有可留空）</span>';
+    html += '<fieldset data-rank="' + rank + '"><legend>第 ' + rank + ' 名' + opt + '</legend>';
+    if (type === '個人') {
+      html += '<label class="f">選手</label><select data-k="sel"><option value="">請選擇選手</option>' +
+        e.finalists.map(function (p, i) { return '<option value="' + i + '">' + esc(clsLabel(p.cls) + '　' + p.name) + '</option>'; }).join('') +
+        '<option value="other">其他（手動輸入）</option></select>' +
+        '<div class="other row2" hidden><div><label class="f">班級代碼</label><input type="text" inputmode="numeric" maxlength="3" data-k="cls" placeholder="例如 503"></div>' +
+        '<div><label class="f">姓名</label><input type="text" maxlength="12" data-k="name"></div></div>' +
+        '<label class="f">成績</label><div class="score"><input type="text" inputmode="numeric" maxlength="3" data-k="s" aria-label="秒"><b>秒</b>' +
+        '<input type="text" inputmode="numeric" maxlength="2" data-k="cs" aria-label="百分秒" placeholder="00"><b>（百分秒）</b></div>';
+    } else {
+      html += '<label class="f">班級</label><select data-k="cls"><option value="">請選擇班級</option>' +
+        e.classes.map(function (c) { return '<option value="' + c + '">' + esc(clsLabel(c)) + '</option>'; }).join('') + '</select>' +
+        '<label class="f">成績' + (e.grade === '三' ? '（趣味賽不記成績，可留空）' : '') + '</label><div class="score"><input type="text" inputmode="numeric" maxlength="2" data-k="m" aria-label="分"><b>分</b>' +
+        '<input type="text" inputmode="numeric" maxlength="2" data-k="s" aria-label="秒"><b>秒</b>' +
+        '<input type="text" inputmode="numeric" maxlength="2" data-k="cs" aria-label="百分秒" placeholder="00"></div>';
+    }
+    html += '</fieldset>';
+  });
+  return html;
+}
+function bindOther(root) {
+  root.addEventListener('change', function (e) {
+    if (e.target.dataset.k === 'sel') { e.target.closest('fieldset').querySelector('.other').hidden = e.target.value !== 'other'; }
+  });
+  // 成績欄位打滿兩位數就自動跳到下一格：分 → 秒 → 百分秒。刪除時不跳
+  root.addEventListener('input', function (e) {
+    var k = e.target.dataset.k; if (k !== 's' && k !== 'm') { return; }
+    if (e.inputType && e.inputType.indexOf('delete') === 0) { return; }
+    if (!/^\d{2}$/.test(e.target.value)) { return; }
+    var next = e.target.closest('fieldset').querySelector('[data-k="' + (k === 'm' ? 's' : 'cs') + '"]');
+    if (next) { next.focus(); if (next.select) { next.select(); } }
+  });
+}
+function fillPlaces() {
+  var e = curEvent();
+  if (!e) {
+    $('#places').innerHTML = evList().length ? '<p class="hint">選擇項目後，在這裡填寫前三名。</p>'
+      : '<div class="note">目前沒有' + (S.type === '接力' ? '大隊接力' : '個人單項') + '的比賽項目。請行政人員到「名冊管理」匯入名單，或到「系統設定」新增比賽項目。</div>';
+    return;
+  }
+  $('#places').innerHTML = placeFieldsHtml(e, S.type);
+}
+function renderPhoto() {
+  var el = $('#photo'); if (!el) { return; }
+  if (S.photo) {
+    el.innerHTML = '<img alt="現場照片預覽" src="' + S.photo + '"><div class="btns"><button class="btn" type="button" data-a="cam">重新拍照</button>' +
+      '<button class="btn" type="button" data-a="pick">更換照片</button><button class="btn danger" type="button" data-a="rm">移除</button></div>';
+  } else {
+    el.innerHTML = '<div class="btns"><button class="btn" type="button" data-a="cam">拍照</button><button class="btn" type="button" data-a="pick">從相簿選擇</button></div>';
+  }
+  $$('button', el).forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (b.dataset.a === 'rm') { S.photo = ''; renderPhoto(); } else { var i = $('#' + b.dataset.a); i.value = ''; i.click(); }
+    });
+  });
+}
+function onPhoto(e) {
+  var file = e.target.files && e.target.files[0]; if (!file) { return; }
+  if (!/^image\//.test(file.type)) { toast('請選擇圖片檔'); return; }
+  var url = URL.createObjectURL(file); var img = new Image();
+  img.onload = function () {
+    var max = 1280, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h));
+    var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    S.photo = c.toDataURL('image/jpeg', 0.72); URL.revokeObjectURL(url); renderPhoto();
+  };
+  img.onerror = function () { URL.revokeObjectURL(url); toast('無法讀取這張照片'); };
+  img.src = url;
+}
+function readPlaces(root, e, type) {
+  var places = []; var used = {};
+  $$('fieldset', root).forEach(function (fs) {
+    var rank = Number(fs.dataset.rank); var v = {};
+    $$('[data-k]', fs).forEach(function (i) { v[i.dataset.k] = i.value.trim(); });
+    var o = { rank: rank }; var any;
+    if (type === '個人') {
+      any = v.sel || v.s || v.cs;
+      if (!any) { return; }
+      if (v.sel === 'other') { o.cls = v.cls; o.name = v.name; }
+      else if (v.sel !== '') { var p = e.finalists[Number(v.sel)]; o.cls = p.cls; o.name = p.name; }
+      if (!o.cls || !o.name) { throw new Error('第 ' + rank + ' 名：請選擇選手'); }
+      if (!/^\d{1,3}$/.test(v.s)) { throw new Error('第 ' + rank + ' 名：請填寫成績的秒數'); }
+      if (v.cs && !/^\d{1,2}$/.test(v.cs)) { throw new Error('第 ' + rank + ' 名：百分秒請填 0 到 99'); }
+      o.score = Number(v.s) + '"' + ('0' + (v.cs || '0')).slice(-2);
+      if (used[o.cls + o.name]) { throw new Error(o.name + ' 重複出現在兩個名次'); }
+      used[o.cls + o.name] = 1;
+    } else {
+      any = v.cls || v.m || v.s || v.cs;
+      if (!any) { return; }
+      if (!v.cls) { throw new Error('第 ' + rank + ' 名：請選擇班級'); }
+      o.cls = v.cls;
+      if (e.grade === '三' && !v.m && !v.s && !v.cs) { o.score = ''; }
+      else {
+        if (!/^\d{1,2}$/.test(v.m) || !/^\d{1,2}$/.test(v.s) || Number(v.s) > 59) { throw new Error('第 ' + rank + ' 名：請填寫成績的分與秒'); }
+        if (v.cs && !/^\d{1,2}$/.test(v.cs)) { throw new Error('第 ' + rank + ' 名：百分秒請填 0 到 99'); }
+        o.score = Number(v.m) + '分' + ('0' + v.s).slice(-2) + '秒' + (v.cs ? ('0' + v.cs).slice(-2) : '');
+      }
+      if (used[o.cls]) { throw new Error(clsLabel(o.cls) + ' 重複出現在兩個名次'); }
+      used[o.cls] = 1;
+    }
+    places.push(o);
+  });
+  if (!places.length || places[0].rank !== 1) { throw new Error('請填寫第 1 名'); }
+  return places;
+}
+function collect() {
+  var e = curEvent(); var recorder = $('#recorder').value.trim();
+  if (!recorder) { throw new Error('請填寫檢錄員姓名'); }
+  if (!e) { throw new Error('請選擇項目'); }
+  if (!$('#date').value || !$('#time').value) { throw new Error('請填寫日期與時間'); }
+  return { type: S.type, recorder: recorder, event: e.name, date: $('#date').value, time: $('#time').value,
+    places: readPlaces($('#places'), e, S.type), urgent: $('#urgent').checked, photo: S.photo };
+}
+function prefillPlaces(root, e, type, places) { // 把已送出的名次、班級、姓名、成績帶回表單
+  places.forEach(function (x) {
+    var fs = root.querySelector('fieldset[data-rank="' + x.rank + '"]'); if (!fs) { return; }
+    var set = function (k, val) { var i = fs.querySelector('[data-k="' + k + '"]'); if (i) { i.value = val; } };
+    var m;
+    if (type === '個人') {
+      var idx = -1; e.finalists.forEach(function (p, i) { if (p.cls === x.cls && p.name === x.name) { idx = i; } });
+      if (idx >= 0) { set('sel', String(idx)); } else { set('sel', 'other'); fs.querySelector('.other').hidden = false; set('cls', x.cls); set('name', x.name); }
+      m = /^(\d+)"(\d{1,2})$/.exec(x.score || ''); if (m) { set('s', m[1]); set('cs', m[2]); }
+    } else {
+      set('cls', x.cls);
+      m = /^(\d+)分(\d{1,2})秒(\d{0,2})$/.exec(x.score || ''); if (m) { set('m', m[1]); set('s', m[2]); set('cs', m[3]); }
+    }
+  });
+}
+/* ───────── 填報時帶入已回報的資料，直接更正 ───────── */
+function latestCase(evName, type) {
+  var l = S.cases.filter(function (c) { return c.event === evName && (c.type === '接力') === (type === '接力'); });
+  l.sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : (a.id < b.id ? -1 : 1); });
+  return l.length ? l[l.length - 1] : null;
+}
+function placesTyped() { return $$('#places [data-k]').some(function (i) { return i.value !== ''; }); }
+function setSendLabel() { var b = $('#send'); if (b) { b.textContent = S.editId ? '送出更正' : '送出成績'; } }
+function renderDup(state, c) {
+  var box = $('#dupBox'); if (!box) { return; } var html = '';
+  if (state === 'edit') {
+    html = '<div class="note"><b>此項目已有回報 ' + esc(c.id) + '</b>（' + esc(c.at.slice(11, 16)) + ' ' + esc(c.recorder) + ' 送出），已帶入原資料。修改後按「送出更正」會直接更正這筆案件。' +
+      (c.hasPhoto ? '原案件已有照片，沒有重新選擇就保留原照片。' : '') +
+      '<label class="f" for="fixWhyR" style="margin-top:8px">更正原因（選填）</label><input id="fixWhyR" type="text" maxlength="100" placeholder="例如：第 2 名成績抄錯">' +
+      '<button class="btn sm" id="asNew" type="button" style="margin-top:8px">不更正，另外新增一筆</button></div>';
+  } else if (state === 'offer') {
+    html = '<div class="note"><b>此項目已有回報 ' + esc(c.id) + '</b>。<button class="btn sm" id="loadOld" type="button">帶入原資料更正</button></div>';
+  } else if (state === 'locked') {
+    html = '<div class="note"><b>此項目已有回報 ' + esc(c.id) + '</b>（' + esc(c.at.slice(11, 16)) + ' ' + esc(c.recorder) + ' 送出）。目前不開放檢錄員自行更正，要更正請洽獎狀列印（行政）人員。若確定要另外回報一筆，可直接填寫送出。</div>';
+  } else if (state === 'new') {
+    html = '<div class="note">將另外新增一筆，原案件 ' + esc(c.id) + ' 保留。<button class="btn sm" id="loadOld" type="button">改為更正原案件</button></div>';
+  }
+  box.innerHTML = html; box.dataset.state = state === 'checking' ? 'checking' : 'done';
+  if ($('#asNew')) { $('#asNew').addEventListener('click', function () { S.editId = null; S.asNew = c.event; fillPlaces(); var n = twNow(); $('#date').value = n.date; $('#time').value = n.time; $('#urgent').checked = false; setSendLabel(); renderDup('new', c); }); }
+  if ($('#loadOld')) { $('#loadOld').addEventListener('click', function () { S.asNew = null; loadCase(c); }); }
+}
+function loadCase(c) {
+  var e = curEvent(); if (!e) { return; }
+  S.editId = c.id; fillPlaces(); prefillPlaces($('#places'), e, S.type, c.places);
+  if (c.date) { $('#date').value = c.date; } if (c.time) { $('#time').value = c.time; }
+  $('#urgent').checked = !!c.urgent; setSendLabel(); renderDup('edit', c);
+}
+function onEventChange() {
+  S.editId = null; S.asNew = null; fillPlaces(); setSendLabel();
+  var e = curEvent(); if (!e) { renderDup(''); return; }
+  var name = e.name, type = S.type;
+  var apply = function (final) {
+    if (!$('#event') || !$('#dupBox')) { return; } // 已離開填報表單（例如切到別的分頁）
+    var cur = curEvent(); if (!cur || cur.name !== name || S.type !== type) { return; } // 使用者已換到別的項目
+    if (S.editId || S.asNew === name) { $('#dupBox').dataset.state = 'done'; return; }
+    var c = latestCase(name, type);
+    if (c && S.boot.allowRevise === false) { renderDup('locked', c); return; }
+    if (c && !placesTyped()) { loadCase(c); } else if (c) { renderDup('offer', c); } else { renderDup(final ? '' : 'checking'); }
+  };
+  apply(false);
+  call('listCases', store.get('pin')).then(function (r) { S.cases = r.cases; S.who = r.who; S.boot.allowRevise = r.allowRevise !== false; apply(true); }).catch(function () { apply(true); });
+}
+/* ───────── 更正已送出的成績（行政） ───────── */
+function fixSheet(c) {
+  var list = c.type === '接力' ? S.boot.relay : S.boot.individual;
+  var e = list.filter(function (x) { return x.name === c.event; })[0];
+  if (!e) { e = { name: c.event, grade: c.event.charAt(0), finalists: [], classes: c.places.map(function (x) { return x.cls; }) }; }
+  openSheet('<h2 style="margin:0 0 4px">更正成績　' + esc(c.id) + '</h2><p class="hint">' + esc(c.event) + '。可更正名次的班級、姓名與成績。</p>' +
+    '<div id="fixPlaces">' + placeFieldsHtml(e, c.type) + '</div>' +
+    '<label class="f req" for="fixWhy">更正原因</label><input id="fixWhy" type="text" maxlength="100" placeholder="例如：第 2 名成績抄錯">' +
+    '<p class="hint">更正後會重新列為待播報。若案件已完成，會退回「處理中」提醒重印獎狀。更正前後的內容都會留在處理紀錄。</p>' +
+    '<div id="fixErr"></div><button class="btn pri block big" id="fixGo" type="button">儲存更正</button>');
+  var root = $('#fixPlaces'); bindOther(root);
+  prefillPlaces(root, e, c.type, c.places);
+  $('#fixGo').addEventListener('click', function () {
+    var places, why = $('#fixWhy').value.trim(), b = this;
+    try { places = readPlaces(root, e, c.type); if (!why) { throw new Error('請填寫更正原因'); } }
+    catch (err) { $('#fixErr').innerHTML = '<div class="err">' + esc(err.message) + '</div>'; return; }
+    b.disabled = true; b.textContent = '儲存中…';
+    call('correctReport', store.get('pin'), c.id, places, why).then(function (r) {
+      closeSheet(); toast(r.changed ? c.id + ' 已更正' + (r.notes && r.notes.length ? '，' + r.notes.join('、') : '') : '內容沒有變動'); return refresh();
+    }).catch(function (err) { b.disabled = false; b.textContent = '儲存更正'; $('#fixErr').innerHTML = '<div class="err">' + esc(err.message) + '</div>'; });
+  });
+}
+function placesHtml(places, type) {
+  return '<ul class="places">' + places.map(function (x) {
+    return '<li><b>第' + NUM[x.rank] + '名</b> ' + esc(clsLabel(x.cls)) + (x.name ? '　' + esc(x.name) : '') + '　<span class="sc">' + esc(x.score || '不記成績') + '</span></li>';
+  }).join('') + '</ul>';
+}
+function submit(force) {
+  var data; $('#formErr').innerHTML = '';
+  try { data = collect(); } catch (e) { $('#formErr').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; return; }
+  var editId = S.editId; var label = editId ? '送出更正' : '送出成績';
+  var fail = function (btn, e) {
+    btn.disabled = false; btn.textContent = label;
+    $('#formErr').innerHTML = '<div class="err">送出失敗：' + esc(e.message) + '<br>資料還在畫面上，請再按一次送出。</div>';
+  };
+  var go = function () {
+    var btn = $('#send'); btn.disabled = true; btn.textContent = '送出中…';
+    store.set('name', data.recorder);
+    if (editId) { // 更正已回報的案件
+      data.id = editId; data.reason = $('#fixWhyR') ? $('#fixWhyR').value.trim() : '';
+      call('reviseReport', data).then(function (r) {
+        if (!r.changed) { btn.disabled = false; btn.textContent = label; toast('內容沒有變動，不需要更正'); return; }
+        S.done = { id: r.id, at: r.at, data: data, fixed: true, notes: r.notes || [] }; S.photo = ''; S.editId = null; viewDone(); window.scrollTo(0, 0); refresh(true);
+      }).catch(function (e) { fail(btn, e); });
+      return;
+    }
+    call('submitReport', data, force).then(function (r) {
+      if (r.duplicate) {
+        btn.disabled = false; btn.textContent = label;
+        confirmSheet('此項目已有人回報', '「' + data.event + '」已有案件 ' + r.duplicate + '。確定要另外新增一筆嗎？請通知獎狀列印以哪一筆為準。', '仍要送出', function () { submit(true); });
+        return;
+      }
+      S.done = { id: r.id, at: r.at, data: data }; S.photo = ''; viewDone(); window.scrollTo(0, 0); refresh(true);
+    }).catch(function (e) { fail(btn, e); });
+  };
+  if (!force && data.places.length < 3) {
+    confirmSheet('只填了 ' + data.places.length + ' 個名次', '確定這個項目只回報到第 ' + data.places[data.places.length - 1].rank + ' 名嗎？', '確定送出', go);
+  } else { go(); }
+}
+function viewDone() {
+  var d = S.done;
+  $('#main').innerHTML = '<div class="card done"><div class="tick">✓</div><h2 style="margin:0">' + (d.fixed ? '已更正，行政已收到' : '已送出，行政已收到') + '</h2>' +
+    '<p class="hint">案件編號</p><div class="num" id="doneId">' + esc(d.id) + '</div><p class="hint">' + (d.fixed ? '更正時間 ' : '送出時間 ') + esc(d.at) + '</p>' +
+    (d.fixed && d.notes.length ? '<p class="hint">' + esc(d.notes.join('、')) + '</p>' : '') + '</div>' +
+    '<div class="card"><h3 style="margin:0 0 4px">' + esc(d.data.event) + (d.data.urgent ? ' <span class="chip c-urgent">急件</span>' : '') + '</h3>' +
+    placesHtml(d.data.places) + '<p class="hint">檢錄員：' + esc(d.data.recorder) + (d.data.photo ? '　已附照片' : '') + '</p></div>' +
+    '<div class="btns"><button class="btn pri" id="again" type="button">再填一筆</button><button class="btn" id="toMine" type="button">查看我的回報</button></div>';
+  $('#again').addEventListener('click', function () { S.done = null; viewReport(); window.scrollTo(0, 0); });
+  $('#toMine').addEventListener('click', function () { S.done = null; show('mine'); });
+}
+
+/* ───────── 案件卡片與清單 ───────── */
+function chips(c) {
+  return '<span class="chip s-' + esc(c.status) + '">' + esc(c.status) + '</span>' +
+    (c.urgent ? '<span class="chip c-urgent">急件</span>' : '') +
+    (c.overdue ? '<span class="chip c-over">逾時 ' + c.waited + ' 分</span>' : '') +
+    (c.announcedAt ? '<span class="chip c-audit">已播報</span>' : '') +
+    (c.corrected ? '<span class="chip c-fix">已更正</span>' : '');
+}
+/* 流程進度：已送出 → 待處理 → 已列印 → 已播報 → 已完成。
+   檢錄員送出後停在「待處理」；行政下載獎狀後「已列印」；司儀播報後「已播報」，並自動「已完成」。 */
+var STAGES = ['待處理', '已列印', '已播報', '已完成'];
+function stageOf(c) { return c.status === '已完成' ? '已完成' : c.announcedAt ? '已播報' : c.printedAt ? '已列印' : '待處理'; }
+function stepper(c) {
+  var done = c.status === '已完成', waiting = !c.printedAt && !c.announcedAt && !done;
+  var st = [['已送出', 'on'], ['待處理', waiting ? 'now' : 'on'], ['已列印', c.printedAt ? 'on' : ''], ['已播報', c.announcedAt ? 'on' : ''], ['已完成', done ? 'on' : '']];
+  return '<div class="steps" aria-label="流程進度">' + st.map(function (x) {
+    return '<span class="' + x[1] + '">' + (x[1] === 'on' ? '✓ ' : x[1] === 'now' ? '● ' : '') + x[0] + '</span>';
+  }).join('') + '</div>';
+}
+function card(c) {
+  return '<button type="button" class="card case' + (c.urgent && c.status !== '已完成' ? ' urgent' : '') + '" data-id="' + esc(c.id) + '">' +
+    '<div>' + chips(c) + '</div><h3>' + esc(c.id) + '　' + esc(c.event) + '</h3>' + stepper(c) + placesHtml(c.places) +
+    '<div class="meta">檢錄員 ' + esc(c.recorder) + '｜' + esc(c.date) + ' ' + esc(c.time) + (c.assignee ? '｜負責 ' + esc(c.assignee) : '') + (c.hasPhoto ? '｜有照片' : '') + '</div>' +
+    (c.result ? '<div class="meta">處理結果：' + esc(c.result) + '</div>' : '') + '</button>';
+}
+function match(c, q) {
+  if (!q) { return true; }
+  var hay = [c.id, c.event, c.recorder, c.assignee].concat(c.places.map(function (x) { return x.cls + ' ' + clsLabel(x.cls) + ' ' + (x.name || ''); })).join(' ').toLowerCase();
+  return q.toLowerCase().split(/\s+/).every(function (w) { return hay.indexOf(w) >= 0; });
+}
+function sortInbox(a, b) {
+  var da = a.status === '已完成', db = b.status === '已完成';
+  if (da !== db) { return da ? 1 : -1; }
+  if (!da && a.urgent !== b.urgent) { return a.urgent ? -1 : 1; }
+  return da ? (a.at < b.at ? 1 : -1) : (a.at < b.at ? -1 : 1);
+}
+function toolbar(placeholder) {
+  return '<div class="bar"><span>更新於 ' + esc(S.loadedAt.slice(11, 16) || '…') + '，每 20 秒自動更新</span><button class="btn" id="reload" type="button" style="min-height:40px">重新整理</button></div>' +
+    '<input id="q" type="search" placeholder="' + esc(placeholder) + '" value="' + esc(S.q) + '">';
+}
+function bindList(mode) {
+  var r = $('#reload'); if (r) { r.addEventListener('click', function () { refresh().then(function () { toast('已更新'); }); }); }
+  var q = $('#q'); if (q) { q.addEventListener('input', function () { S.q = q.value; show(S.tab); }); }
+  $$('.filters button').forEach(function (b) { b.addEventListener('click', function () { S.filter = b.dataset.f; show(S.tab); }); });
+  $$('.case').forEach(function (b) { b.addEventListener('click', function () { detail(b.dataset.id, mode); }); });
+}
+function listHtml(list, emptyMsg) { return list.length ? list.map(card).join('') : '<div class="empty">' + esc(emptyMsg) + '</div>'; }
+
+function viewMine() {
+  var name = store.get('name');
+  var list = S.cases.filter(function (c) { return name && c.recorder === name; }).sort(function (a, b) { return a.at < b.at ? 1 : -1; });
+  $('#main').innerHTML = '<div class="card"><label class="f" for="myName">檢錄員姓名</label><input id="myName" type="text" maxlength="20" value="' + esc(name) + '">' +
+    '<p class="hint">輸入填報時用的姓名，就能看到自己送出的案件與行政回覆。</p></div>' +
+    '<div class="bar"><span>共 ' + list.length + ' 筆</span><button class="btn" id="reload" type="button" style="min-height:40px">重新整理</button></div>' +
+    listHtml(list, name ? '還沒有以「' + name + '」送出的成績' : '請先輸入姓名');
+  $('#myName').addEventListener('change', function () { store.set('name', this.value.trim()); viewMine(); });
+  bindList('view');
+}
+function viewProgress() {
+  var cnt = { '全部': S.cases.length }; STAGES.forEach(function (s) { cnt[s] = S.cases.filter(function (c) { return stageOf(c) === s; }).length; });
+  if (cnt[S.filter] === undefined) { S.filter = '全部'; }
+  var list = S.cases.filter(function (c) { return (S.filter === '全部' || stageOf(c) === S.filter) && match(c, S.q); }).sort(function (a, b) { return a.at < b.at ? 1 : -1; });
+  $('#main').innerHTML = toolbar('搜尋項目、班級、姓名、案件編號') +
+    '<div class="filters" id="stageF">' + ['全部'].concat(STAGES).map(function (f) {
+      return '<button type="button" data-f="' + f + '" aria-pressed="' + (S.filter === f) + '">' + f + ' ' + cnt[f] + '</button>';
+    }).join('') + '</div><p class="hint" style="margin:0 2px 8px">流程：已送出 → 待處理 → 已列印（行政下載獎狀）→ 已播報（司儀）→ 已完成。司儀播報後案件會自動完成。</p>' +
+    '<h2 class="sec">' + (S.filter === '全部' ? '全部案件' : S.filter) + '（' + list.length + '）</h2>' + listHtml(list, '目前沒有符合的案件');
+  bindList('view');
+}
+
+/* ───────── 司儀播報 ───────── */
+function viewMc() {
+  if (!has('司儀') && !has('行政')) { return gate('司儀', '司儀播報'); }
+  var ord = S.mcOrder || []; var pos = function (c) { var i = ord.indexOf(c.id); return i < 0 ? 1e9 : i; };
+  // 待播報在前，依司儀自訂順序，沒調整過的依送達先後；已播報的排在後面
+  var list = S.cases.slice().sort(function (a, b) {
+    var x = !!a.announcedAt, y = !!b.announcedAt; if (x !== y) { return x ? 1 : -1; }
+    if (!x && pos(a) !== pos(b)) { return pos(a) - pos(b); }
+    return a.at < b.at ? -1 : a.at > b.at ? 1 : (a.id < b.id ? -1 : 1);
+  });
+  var todo = list.filter(function (c) { return !c.announcedAt; }).length; var ti = 0;
+  $('#main').innerHTML = '<div class="bar"><span>待播報 ' + todo + ' 筆｜更新於 ' + esc(S.loadedAt.slice(11, 16)) + '</span><button class="btn" id="reload" type="button" style="min-height:40px">重新整理</button></div>' +
+    (todo > 1 ? '<p class="hint" style="margin:0 2px 8px">預設依成績送達的先後排列。可用「上移、下移、置頂」調整播報順序，所有司儀看到的順序相同。</p>' : '') +
+    (list.length ? list.map(function (c) {
+      var k = c.announcedAt ? -1 : ti++;
+      var mv = k < 0 || todo < 2 ? '' : '<div class="mvbar"><span class="meta">第 ' + (k + 1) + ' 順位</span><span>' +
+        '<button class="btn sm" type="button" data-mv="top" data-id="' + esc(c.id) + '"' + (k === 0 ? ' disabled' : '') + '>置頂</button> ' +
+        '<button class="btn sm" type="button" aria-label="上移" data-mv="up" data-id="' + esc(c.id) + '"' + (k === 0 ? ' disabled' : '') + '>↑ 上移</button> ' +
+        '<button class="btn sm" type="button" aria-label="下移" data-mv="down" data-id="' + esc(c.id) + '"' + (k === todo - 1 ? ' disabled' : '') + '>↓ 下移</button></span></div>';
+      return '<div class="card mc' + (c.announcedAt ? ' said' : '') + '" data-mc="' + esc(c.id) + '">' + mv + '<div>' + (c.urgent ? '<span class="chip c-urgent">急件</span>' : '') +
+        (c.announcedAt ? '<span class="chip c-audit">已播報 ' + esc(c.announcedAt.slice(11, 16)) + '</span>' : '<span class="chip s-待處理">待播報</span>') +
+        (c.corrected ? '<span class="chip c-fix">已更正，請以此為準</span>' : '') + '<span class="meta">' + esc(c.id) + '</span></div><h3 style="margin:6px 0">' + esc(c.event) + '</h3>' + placesHtml(c.places) +
+        '<button class="btn ' + (c.announcedAt ? '' : 'pri ') + 'block" style="margin-top:10px" type="button" data-say="' + esc(c.id) + '" data-flag="' + (c.announcedAt ? '0' : '1') + '">' +
+        (c.announcedAt ? '取消已播報' : '標記已播報') + '</button></div>';
+    }).join('') : '<div class="empty">還沒有成績進來</div>');
+  bindList('view');
+  $$('[data-mv]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      $$('[data-mv]').forEach(function (x) { x.disabled = true; });
+      call('moveAnnounce', store.get('pin'), b.dataset.id, b.dataset.mv).then(function (r) { S.mcOrder = r.order; viewMc(); })
+        .catch(function (e) { toast(e.message); refresh(); });
+    });
+  });
+  $$('[data-say]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      b.disabled = true;
+      call('markAnnounced', store.get('pin'), b.dataset.say, b.dataset.flag === '1').then(function (r) { toast(b.dataset.flag === '1' ? b.dataset.say + ' 已播報，案件已完成' : b.dataset.say + ' 已取消播報' + (r && r.status !== '已完成' ? '，案件退回' + r.status : '')); return refresh(); }).catch(function (e) { toast(e.message); b.disabled = false; });
+    });
+  });
+}
+
+/* ───────── 列印作業 ───────── */
+function viewAdmin() {
+  if (gate('行政', '列印作業')) { return; }
+  var cnt = { '全部': S.cases.length }; ['待處理', '處理中', '已完成'].forEach(function (s) { cnt[s] = S.cases.filter(function (c) { return c.status === s; }).length; });
+  var list = S.cases.filter(function (c) { return (S.filter === '全部' || c.status === S.filter) && match(c, S.q); }).sort(sortInbox);
+  $('#main').innerHTML = toolbar('搜尋項目、案件編號、填報人、班級姓名') +
+    '<div class="filters">' + ['全部', '待處理', '處理中', '已完成'].map(function (f) {
+      return '<button type="button" data-f="' + f + '" aria-pressed="' + (S.filter === f) + '">' + f + ' ' + cnt[f] + '</button>';
+    }).join('') + '</div>' + listHtml(list, '目前沒有符合的案件') +
+    '<div class="card"><h3 style="margin:0 0 6px">獎狀合併列印資料</h3><p class="hint">把目前所有成績整理成 Word 合併列印可用的表格（一張獎狀一列，接力會展開成各班選手）。</p>' +
+    '<button class="btn block" id="exp" type="button" style="margin-top:10px">產生合併列印資料</button><div id="expOut"></div></div>' +
+    '<div class="card"><h3 style="margin:0 0 6px">資料下載、匯入與清空</h3><p class="hint">先下載全部案件資料（CSV，可用 Excel 開啟），「清空全部案件」才會開放。清空前會再確認兩次，並自動抄一份到試算表的「案件備份」工作表。名冊與系統設定不受影響。</p>' +
+    '<div class="btns" style="margin-top:10px"><button class="btn" id="dlAll" type="button"' + (S.cases.length ? '' : ' disabled') + '>下載全部案件資料（' + S.cases.length + ' 筆）</button>' +
+    '<button class="btn danger" id="clrAll" type="button"' + (S.cases.length && DL.all === casesSig(S.cases) ? '' : ' disabled') + '>清空全部案件</button></div>' +
+    '<div class="btns" style="margin-top:8px"><button class="btn" id="tplCsv" type="button">下載空白範本</button><button class="btn" id="impCsv" type="button">匯入案件資料</button></div>' +
+    '<input id="impFile" type="file" accept=".csv,text/csv" hidden>' +
+    '<p class="hint">匯入的檔案格式與下載的相同，所以下載的檔案可以直接匯回來，也可以用空白範本填好再匯入。用 Excel 編輯後請存成 CSV。</p>' +
+    '<p class="hint" id="clrHint">' + (!S.cases.length ? '目前沒有案件。' : DL.all === casesSig(S.cases) ? '已下載最新資料，可以清空。' : DL.all ? '下載之後資料有變動，請重新下載。' : '尚未下載。') + '</p></div>' +
+    '<div class="card"><h3 style="margin:0 0 6px">獎狀下載與列印</h3><p class="hint">先選範圍，再選獎狀種類。產生後，包含的案件會自動標記為「已列印」。單一案件也可以點開上方的案件個別下載。</p>' +
+    '<label class="f" for="certScope">範圍</label><select id="certScope">' +
+    '<option value="unprinted"' + (S.certScope === 'unprinted' ? ' selected' : '') + '>已送件、尚未列印的案件（' + S.cases.filter(function (c) { return !c.printedAt; }).length + ' 筆）</option>' +
+    '<option value="events"' + (S.certScope === 'events' ? ' selected' : '') + '>選擇比賽項目</option>' +
+    '<option value="all"' + (S.certScope === 'all' ? ' selected' : '') + '>全部案件（' + S.cases.length + ' 筆）</option></select>' +
+    (S.certScope === 'events' ? '<div class="evpick" id="evPick">' + (certEventList().length ? certEventList().map(function (e) {
+      return '<label><input type="checkbox" value="' + esc(e.key) + '"' + (S.certEvents[e.key] ? ' checked' : '') + '>' + esc(e.name) + '　<span class="meta">' + e.n + ' 筆' + (e.left ? '，' + e.left + ' 筆未列印' : '，皆已列印') + '</span></label>';
+    }).join('') : '<span class="meta">目前沒有案件</span>') + '</div>' : '') +
+    '<p class="hint" id="certScopeHint">' + esc(certScopeText()) + '</p>' +
+    '<div id="certAll">' + [['個人', '個人項目獎狀'], ['班級', '接力班級獎狀'], ['選手', '接力選手獎狀']].map(function (k) {
+      return '<p class="certlab">' + k[1] + '</p><div class="btns"><button class="btn" type="button" data-cert="' + k[0] + '" data-fmt="docx">下載 Word</button>' +
+        '<button class="btn" type="button" data-cert="' + k[0] + '" data-fmt="print">列印／PDF</button></div>';
+    }).join('') + '</div></div>';
+  bindList('admin');
+  $('#dlAll').addEventListener('click', function () {
+    downloadCases(S.cases, '體表會案件資料_全部_' + twNow().date); DL.all = casesSig(S.cases); toast('已下載 ' + S.cases.length + ' 筆案件資料'); viewAdmin();
+  });
+  $('#tplCsv').addEventListener('click', function () {
+    saveBlob(new Blob(['\uFEFF' + csvHead().map(csvCell).join(',') + '\r\n'], { type: 'text/csv;charset=utf-8' }), '體表會案件資料_空白範本.csv'); toast('已下載空白範本');
+  });
+  $('#impCsv').addEventListener('click', function () { var f = $('#impFile'); f.value = ''; f.click(); });
+  $('#impFile').addEventListener('change', function () { if (this.files && this.files[0]) { importCasesFile(this.files[0]); } });
+  $('#clrAll').addEventListener('click', function () {
+    var n = S.cases.length;
+    confirmTwice('清空全部 ' + n + ' 筆案件？', '所有已送出的成績與處理紀錄都會從系統移除，案件編號會從 R001 重新開始。',
+      '最後確認：真的要清空嗎？', '按下「清空全部」後，網站上無法復原。資料會保留在試算表的「案件備份」工作表，以及您剛才下載的檔案。', '清空全部', function () {
+        call('clearCases', store.get('pin'), n).then(function (r) { DL = { all: '', one: {} }; toast('已清空 ' + r.removed + ' 筆案件'); return refresh(); })
+          .catch(function (e) { toast(e.message); refresh(); });
+      });
+  });
+  $$('#certAll [data-cert]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var ids = certScopeIds();
+      if (!ids.length) { toast(S.certScope === 'events' ? '請先勾選比賽項目' : S.certScope === 'unprinted' ? '沒有尚未列印的案件' : '目前沒有案件'); return; }
+      var name = '獎狀_' + ({ unprinted: '未列印', events: '選定項目', all: '全部' })[S.certScope] + '_' + (b.dataset.cert === '個人' ? '個人項目' : '接力' + b.dataset.cert);
+      if (b.dataset.fmt === 'print') { printCerts(b, ids, b.dataset.cert, name); } else { downloadCerts(b, ids, b.dataset.cert, name); }
+    });
+  });
+  $('#certScope').addEventListener('change', function () { S.certScope = this.value; viewAdmin(); });
+  $$('#evPick input').forEach(function (i) { i.addEventListener('change', function () { S.certEvents[i.value] = i.checked; $('#certScopeHint').textContent = certScopeText(); }); });
+  $('#exp').addEventListener('click', function () {
+    var b = this; b.disabled = true; b.textContent = '產生中…';
+    call('exportMerge', store.get('pin')).then(function (r) {
+      b.disabled = false; b.textContent = '重新產生合併列印資料';
+      $('#expOut').innerHTML = '<p>已產生 ' + r.count + ' 張獎狀的資料。</p><div class="btns"><a class="btn pri" target="_blank" rel="noopener" href="' + esc(r.url) + '">下載 Excel</a>' +
+        '<a class="btn" target="_blank" rel="noopener" href="' + esc(r.view) + '">在試算表開啟</a></div><p class="hint">下載需要有這份試算表的檢視權限。</p>';
+    }).catch(function (e) { b.disabled = false; b.textContent = '產生合併列印資料'; toast(e.message); });
+  });
+}
+
+/* ───────── 頒發獎狀（原校長稽核） ───────── */
+function viewAudit() { // 頒發獎狀（原校長稽核；核可功能已取消）
+  if (gate('校長', '頒發獎狀')) { return; }
+  var ready = S.cases.filter(function (c) { return c.announcedAt; }).sort(function (a, b) { return a.announcedAt < b.announcedAt ? 1 : -1; });
+  var open = S.cases.filter(function (c) { return !c.announcedAt; });
+  var over = open.filter(function (c) { return c.overdue; });
+  $('#main').innerHTML = '<div class="bar"><span>更新於 ' + esc(S.loadedAt.slice(11, 16)) + '｜逾時標準 ' + S.boot.overdueMin + ' 分鐘</span><button class="btn" id="reload" type="button" style="min-height:40px">重新整理</button></div>' +
+    '<div class="stats"><div><b>' + ready.length + '</b>可頒發</div><div><b>' + open.length + '</b>尚未播報</div><div class="' + (over.length ? 'bad' : '') + '"><b>' + over.length + '</b>逾時</div></div>' +
+    '<h2 class="sec">可頒發獎狀（司儀已播報，共 ' + ready.length + ' 項）</h2>' +
+    (ready.length ? ready.map(function (c) {
+      return '<button type="button" class="card case mc" data-id="' + esc(c.id) + '"><div><span class="chip c-audit">已播報 ' + esc(c.announcedAt.slice(11, 16)) + '</span>' +
+        (c.printedAt ? '<span class="chip s-已完成">獎狀已列印</span>' : '<span class="chip c-over">獎狀尚未列印</span>') +
+        (c.corrected ? '<span class="chip c-fix">已更正</span>' : '') + '<span class="meta">' + esc(c.id) + '</span></div><h3 style="margin:6px 0">' + esc(c.event) + '</h3>' + placesHtml(c.places) + '</button>';
+    }).join('') : '<div class="empty">還沒有已播報的項目</div>') +
+    '<h2 class="sec">尚未播報（' + open.length + '）</h2>' + listHtml(open.sort(sortInbox), '所有項目都已播報');
+  bindList('view');
+}
+
+/* ───────── 名冊管理 ───────── */
+var R = { rows: null, edit: -1, preview: null, mode: 'append', text: '' };
+var GRADES = { '一': '1', '二': '2', '三': '3', '四': '4', '五': '5', '六': '6' };
+function half(s) { return String(s == null ? '' : s).replace(/[０-９]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 65248); }).replace(/　/g, ' ').trim(); }
+function checkRow(r) { // 回傳錯誤訊息，沒有問題回傳空字串
+  if (r[0] !== '個人' && r[0] !== '接力') { return '類別只能填「個人」或「接力」'; }
+  if (!r[1]) { return '缺少項目'; }
+  if (r[1].length > 30) { return '項目名稱過長'; }
+  if (!GRADES[r[1].charAt(0)]) { return '項目名稱要以年級開頭，例如「五年級100公尺男生組」'; }
+  if (!/^[1-6]\d{2}$/.test(r[2])) { return '班級要填三碼代碼，例如 503'; }
+  if (r[2].charAt(0) !== GRADES[r[1].charAt(0)]) { return '班級 ' + r[2] + ' 與項目年級不符'; }
+  if (r[3] && !/^\d{1,2}$/.test(r[3])) { return '座號要填數字'; }
+  if (r[4].length > 12) { return '姓名過長'; }
+  return '';
+}
+function parseRoster(text) {
+  var rows = [], errors = [];
+  String(text).split(/\r?\n/).forEach(function (line, i) {
+    if (!line.trim()) { return; }
+    var cells = (line.indexOf('\t') >= 0 ? line.split('\t') : line.split(/[,，]/)).map(half);
+    if (cells[0] === '類別') { return; } // 標題列
+    while (cells.length < 5) { cells.push(''); }
+    var r = cells.slice(0, 5); r[2] = r[2].replace(/\.0$/, ''); r[3] = r[3].replace(/\.0$/, '');
+    var e = checkRow(r);
+    if (e) { errors.push('第 ' + (i + 1) + ' 列：' + e); } else { rows.push(r); }
+  });
+  return { rows: rows, errors: errors };
+}
+function rosterStats(rows) {
+  var ev = {}, order = [];
+  rows.forEach(function (r) { var k = r[0] + '|' + r[1]; if (!ev[k]) { ev[k] = { type: r[0], name: r[1], n: 0, cls: {} }; order.push(k); } ev[k].n += r[4] ? 1 : 0; ev[k].cls[r[2]] = 1; });
+  return order.map(function (k) { return ev[k]; });
+}
+function statsHtml(rows) {
+  var st = rosterStats(rows);
+  if (!st.length) { return '<p class="hint">沒有資料</p>'; }
+  return '<ul class="places">' + st.map(function (e) {
+    return '<li>' + esc(e.name) + '　<span class="meta">' + (e.type === '接力' ? Object.keys(e.cls).length + ' 班，' : '') + e.n + ' 人</span></li>';
+  }).join('') + '</ul>';
+}
+function reloadBoot() { return call('getBootstrap', store.get('pin')).then(function (b) { S.boot = b; S.who = b.who; applyHeader(); }); }
+function saveRoster(rows, mode, msg) {
+  return call('importRoster', store.get('pin'), rows, mode).then(function (r) {
+    R.rows = r.rows; R.edit = -1; R.preview = null; return reloadBoot();
+  }).then(function () { toast(msg); viewRoster(); });
+}
+function viewRoster() {
+  if (gate('行政', '名冊管理')) { return; }
+  if (!R.rows) {
+    $('#main').innerHTML = '<div class="empty">名冊載入中…</div>';
+    call('getRoster', store.get('pin')).then(function (r) { R.rows = r.rows; if (S.tab === 'roster') { viewRoster(); } })
+      .catch(function (e) { $('#main').innerHTML = '<div class="err">名冊載入失敗：' + esc(e.message) + '</div>'; });
+    return;
+  }
+  var ed = R.edit >= 0 ? R.rows[R.edit] : null;
+  var evNames = rosterStats(R.rows).map(function (e) { return e.name; });
+  var html = '<div class="card"><h3 style="margin:0 0 4px">目前名冊（共 ' + R.rows.length + ' 列）</h3>' + statsHtml(R.rows) +
+    '<p class="hint">名冊更新後，檢錄員要重新整理頁面才會看到新名單。</p></div>' +
+
+    '<div class="card"><h3 style="margin:0 0 4px">貼上匯入</h3>' +
+    '<p class="hint">在 Excel 整理成五欄：類別（個人或接力）、項目、班級代碼、座號、姓名，選取後複製，貼到下面。座號可留空。只有班級、沒有選手名單時，姓名也可留空（個人項目由檢錄員現場手動輸入）。</p>' +
+    '<div class="btns" style="margin:10px 0"><button class="btn" id="rTpl" type="button">填入範例</button><button class="btn" id="rCur" type="button">載入目前名冊</button></div>' +
+    '<textarea id="rText" style="min-height:160px;font-family:monospace;font-size:14px;white-space:pre" wrap="off" placeholder="類別&#9;項目&#9;班級&#9;座號&#9;姓名">' + esc(R.text) + '</textarea>' +
+    '<label class="check" style="margin-top:8px"><input type="radio" name="rMode" value="append"' + (R.mode === 'append' ? ' checked' : '') + '>加在目前名冊後面</label>' +
+    '<label class="check" style="margin-top:0"><input type="radio" name="rMode" value="replace"' + (R.mode === 'replace' ? ' checked' : '') + '>取代全部名冊</label>' +
+    '<button class="btn block" id="rPrev" type="button" style="margin-top:8px">預覽</button><div id="rOut"></div></div>' +
+
+    '<div class="card"><h3 style="margin:0 0 4px" id="rFormTitle">' + (ed ? '修改第 ' + (R.edit + 1) + ' 列' : '手動新增一筆') + '</h3>' +
+    '<label class="f" for="mType">類別</label><select id="mType"><option' + (ed && ed[0] === '接力' ? '' : ' selected') + '>個人</option><option' + (ed && ed[0] === '接力' ? ' selected' : '') + '>接力</option></select>' +
+    '<label class="f" for="mEv">項目</label><input id="mEv" type="text" maxlength="30" list="mEvList" placeholder="例如 五年級100公尺男生組" value="' + esc(ed ? ed[1] : '') + '">' +
+    '<datalist id="mEvList">' + evNames.map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>' +
+    '<div class="row2"><div><label class="f" for="mCls">班級代碼</label><input id="mCls" type="text" inputmode="numeric" maxlength="3" placeholder="503" value="' + esc(ed ? ed[2] : '') + '"></div>' +
+    '<div><label class="f" for="mNo">座號（選填）</label><input id="mNo" type="text" inputmode="numeric" maxlength="2" value="' + esc(ed ? ed[3] : '') + '"></div></div>' +
+    '<label class="f" for="mName">姓名</label><input id="mName" type="text" maxlength="12" value="' + esc(ed ? ed[4] : '') + '">' +
+    '<div id="mErr"></div><div class="btns" style="margin-top:14px">' + (ed ? '<button class="btn" id="mCancel" type="button">取消修改</button>' : '') +
+    '<button class="btn pri" id="mSave" type="button">' + (ed ? '儲存修改' : '新增') + '</button></div></div>' +
+
+    '<h2 class="sec">逐筆檢視與修改</h2>' + rosterStats(R.rows).map(function (e) {
+      return '<details class="card"><summary><b>' + esc(e.name) + '</b>　<span class="meta">' + e.n + ' 人</span></summary>' +
+        R.rows.map(function (r, i) { return { r: r, i: i }; }).filter(function (x) { return x.r[0] === e.type && x.r[1] === e.name; }).map(function (x) {
+          return '<div class="rrow"><span>' + esc(clsLabel(x.r[2])) + (x.r[3] ? '　' + esc(x.r[3]) + ' 號' : '') + '　' + esc(x.r[4] || '（僅班級）') + '</span>' +
+            '<span><button class="btn sm" type="button" data-redit="' + x.i + '">修改</button> <button class="btn sm danger" type="button" data-rdel="' + x.i + '">刪除</button></span></div>';
+        }).join('') + '</details>';
+    }).join('');
+  $('#main').innerHTML = html;
+
+  $('#rText').addEventListener('input', function () { R.text = this.value; });
+  $$('[name=rMode]').forEach(function (x) { x.addEventListener('change', function () { R.mode = x.value; }); });
+  $('#rTpl').addEventListener('click', function () {
+    R.text = ['類別\t項目\t班級\t座號\t姓名', '個人\t五年級100公尺男生組\t501\t\t王小明', '個人\t五年級100公尺男生組\t502\t\t李小華',
+      '接力\t五年級大隊接力\t501\t3\t王小明', '接力\t五年級大隊接力\t501\t12\t陳小美', '接力\t三年級大隊接力\t301\t\t'].join('\n');
+    $('#rText').value = R.text;
+  });
+  $('#rCur').addEventListener('click', function () {
+    R.text = '類別\t項目\t班級\t座號\t姓名\n' + R.rows.map(function (r) { return r.join('\t'); }).join('\n');
+    $('#rText').value = R.text; R.mode = 'replace'; $('[name=rMode][value=replace]').checked = true;
+    toast('已載入，可直接修改，或全選複製到 Excel');
+  });
+  $('#rPrev').addEventListener('click', function () {
+    var p = parseRoster($('#rText').value); var out = $('#rOut');
+    if (!p.rows.length && !p.errors.length) { out.innerHTML = '<div class="err">沒有可匯入的資料</div>'; return; }
+    if (p.errors.length) {
+      out.innerHTML = '<div class="err">有 ' + p.errors.length + ' 列格式不正確，請修正後再預覽：<br>' + p.errors.slice(0, 15).map(esc).join('<br>') + (p.errors.length > 15 ? '<br>…其餘 ' + (p.errors.length - 15) + ' 列' : '') + '</div>';
+      return;
+    }
+    R.preview = p.rows;
+    out.innerHTML = '<h3>預覽：共 ' + p.rows.length + ' 列，格式正確</h3>' + statsHtml(p.rows) +
+      '<p class="hint">' + (R.mode === 'replace' ? '匯入後會刪除目前的 ' + R.rows.length + ' 列，改成上面這份。' : '匯入後會加在目前的 ' + R.rows.length + ' 列之後。') + '已送出的成績案件不受影響。</p>' +
+      '<button class="btn pri block" id="rGo" type="button">確認匯入</button>';
+    $('#rGo').addEventListener('click', function () {
+      var b = this; b.disabled = true; b.textContent = '匯入中…'; var n = R.preview.length;
+      saveRoster(R.preview, R.mode, '已匯入 ' + n + ' 列').then(function () { R.text = ''; if ($('#rText')) { $('#rText').value = ''; } })
+        .catch(function (e) { b.disabled = false; b.textContent = '確認匯入'; out.insertAdjacentHTML('beforeend', '<div class="err">' + esc(e.message) + '</div>'); });
+    });
+  });
+  $('#mSave').addEventListener('click', function () {
+    var r = [$('#mType').value, half($('#mEv').value), half($('#mCls').value), half($('#mNo').value), half($('#mName').value)];
+    var e = checkRow(r); if (e) { $('#mErr').innerHTML = '<div class="err">' + esc(e) + '</div>'; return; }
+    var b = this; b.disabled = true; var p;
+    if (R.edit >= 0) { var all = R.rows.slice(); all[R.edit] = r; p = saveRoster(all, 'replace', '已修改'); }
+    else { p = saveRoster([r], 'append', '已新增 ' + (r[4] || clsLabel(r[2]))); }
+    p.catch(function (err) { b.disabled = false; $('#mErr').innerHTML = '<div class="err">' + esc(err.message) + '</div>'; });
+  });
+  if ($('#mCancel')) { $('#mCancel').addEventListener('click', function () { R.edit = -1; viewRoster(); }); }
+  $$('[data-redit]').forEach(function (b) { b.addEventListener('click', function () { R.edit = Number(b.dataset.redit); viewRoster(); $('#rFormTitle').scrollIntoView(); }); });
+  $$('[data-rdel]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var i = Number(b.dataset.rdel); var r = R.rows[i];
+      confirmSheet('刪除這一筆？', r[1] + '　' + clsLabel(r[2]) + '　' + (r[4] || '（僅班級）'), '刪除', function () {
+        var all = R.rows.slice(); all.splice(i, 1);
+        saveRoster(all, 'replace', '已刪除').catch(function (e) { toast(e.message); });
+      });
+    });
+  });
+}
+
+/* ───────── 系統設定 ───────── */
+var G = { values: null };
+var CONF_FIELDS = [
+  ['系統名稱', 'text', 30, '顯示在頁面最上方與瀏覽器分頁'],
+  ['學校名稱', 'text', 30, ''],
+  ['學年度', 'text', 3, '例如 115'],
+  ['活動名稱', 'text', 40, '顯示在系統名稱下方，也會帶進獎狀匯出資料'],
+  ['活動日期', 'date', 10, '活動舉辦的日期。沒有另外填頒獎日期時，獎狀上的日期就用這一天'],
+  ['頒獎日期', 'date', 10, '印在獎狀最下方的日期。留空則依序採用活動日期、產生獎狀當天'],
+  ['頒獎日期格式', 'select', ['中華民國', '西元'], '中華民國：中華民國115年11月21日。西元：西元2026年11月21日'],
+  ['檢錄員可更正', 'select', ['開啟', '關閉'], '開啟：填報時若項目已有回報，會帶入原資料，檢錄員可直接送出更正。關閉：只提示已有回報，更正要由行政在收件匣處理'],
+  ['字號前綴', 'text', 20, '獎狀字號前面的文字。匯出資料的「完整字號」欄會是：前綴＋編號＋號，例如 ○縣市○獎字第1150001號'],
+  ['獎狀字號', 'text', 20, '匯出獎狀資料的「編號」欄。選流水號時，這裡填第一張的號碼，例如 115001'],
+  ['編號方式', 'select', ['同一字號', '流水號'], '同一字號：每張獎狀編號相同。流水號：從獎狀字號開始，每張加 1'],
+  ['逾時分鐘', 'text', 3, '案件送出後超過幾分鐘未完成，就在頒發獎狀頁標示逾時'],
+  ['獎狀上邊界微調', 'text', 6, 'Word 獎狀的版面微調，單位公釐，可填 -20 到 30，預設 0。正數讓上方留白變多，文字往下移；負數往上移'],
+  ['獎狀下邊界微調', 'text', 6, '正數讓下方留白變多。最後一行被擠到下一頁時，可填負數'],
+  ['獎狀左邊界微調', 'text', 6, '正數讓文字往右移。只想平移不想改變行寬時，左邊加多少，右邊就減多少'],
+  ['獎狀右邊界微調', 'text', 6, '正數讓右方留白變多，每行可容納的字會變少'],
+  ['列印頁垂直位移', 'text', 6, '只影響「列印／PDF」，不影響 Word。單位公釐，-20 到 20。正數讓整頁文字往下移。列印／PDF 的位置與 Word 版有落差時用這個補正'],
+  ['列印頁水平位移', 'text', 6, '只影響「列印／PDF」。正數讓整頁文字往右移']
+];
+function applyHeader() {
+  var b = S.boot; if (!b) { return; }
+  $('#appName').textContent = b.appName || '體表會成績回報系統'; document.title = $('#appName').textContent;
+  $('#sub').textContent = [b.school, b.title].filter(String).join(' ');
+  $('#ver').textContent = APP_VERSION + (b.version && b.version !== APP_VERSION ? '（後端 ' + b.version + '）' : '');
+}
+function afterEventChange(msg) { R.rows = null; return reloadBoot().then(function () { toast(msg); viewSettings(); }); }
+function viewSettings() {
+  if (gate('行政', '系統設定')) { return; }
+  if (!G.values) {
+    $('#main').innerHTML = '<div class="empty">設定載入中…</div>';
+    call('getSettings', store.get('pin')).then(function (r) { G.values = r.values; if (S.tab === 'settings') { viewSettings(); } })
+      .catch(function (e) { $('#main').innerHTML = '<div class="err">設定載入失敗：' + esc(e.message) + '</div>'; });
+    return;
+  }
+  var evRows = function (list, type) {
+    if (!list.length) { return '<p class="hint">尚無項目</p>'; }
+    return list.map(function (e, i) {
+      var meta = type === '接力' ? e.classes.length + ' 班' : e.finalists.length + ' 人';
+      return '<div class="rrow"><span>' + esc(e.name) + '　<span class="meta">' + meta + '</span></span><span>' +
+        '<button class="btn sm" type="button" aria-label="上移" data-ev="up" data-t="' + type + '" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + '>↑</button> ' +
+        '<button class="btn sm" type="button" aria-label="下移" data-ev="down" data-t="' + type + '" data-i="' + i + '"' + (i === list.length - 1 ? ' disabled' : '') + '>↓</button> ' +
+        (type === '接力' ? '<button class="btn sm" type="button" data-ev="cls" data-t="' + type + '" data-i="' + i + '">班級</button> ' : '') +
+        '<button class="btn sm" type="button" data-ev="rename" data-t="' + type + '" data-i="' + i + '">改名</button> ' +
+        '<button class="btn sm danger" type="button" data-ev="del" data-t="' + type + '" data-i="' + i + '">刪除</button></span></div>';
+    }).join('');
+  };
+  $('#main').innerHTML = '<div class="card"><h3 style="margin:0 0 4px">基本設定</h3>' +
+    CONF_FIELDS.map(function (f, i) {
+      if (f[1] === 'select') {
+        return '<label class="f" for="cf' + i + '">' + f[0] + '</label><select id="cf' + i + '" data-c="' + f[0] + '">' + f[2].map(function (o) {
+          return '<option' + (G.values[f[0]] === o ? ' selected' : '') + '>' + o + '</option>'; }).join('') + '</select><p class="hint">' + f[3] + '</p>';
+      }
+      return '<label class="f" for="cf' + i + '">' + f[0] + '</label><input id="cf' + i + '" data-c="' + f[0] + '" type="' + f[1] + '" maxlength="' + f[2] + '"' +
+        (f[0] === '學年度' || f[0] === '逾時分鐘' ? ' inputmode="numeric"' : (f[0].indexOf('邊界微調') > 0 || f[0].indexOf('列印頁') === 0) ? ' inputmode="text" placeholder="0"' : '') + ' value="' + esc(G.values[f[0]]) + '">' + (f[3] ? '<p class="hint">' + f[3] + '</p>' : '');
+    }).join('') + '<div id="cfErr"></div><button class="btn pri block big" id="cfSave" type="button">儲存設定</button>' +
+    '<p class="certlab">版面測試獎狀（3 張）</p><div class="btns"><button class="btn" id="cfTest" type="button">下載 Word</button><button class="btn" id="cfTestP" type="button">列印／PDF</button></div>' +
+    '<p class="hint">測試獎狀用「已儲存」的設定產生，內含一般、長項目名稱、長英文姓名各一張，方便確認邊界與自動縮小字體。項目或姓名太長時，系統會自動縮小該段文字避免換行。</p></div>' +
+
+    '<div class="card"><h3 style="margin:0 0 4px">比賽項目：個人單項競賽</h3><p class="hint">順序就是填報表單的選單順序。選手名單請到「名冊管理」維護。</p>' + evRows(S.boot.individual, '個人') + '</div>' +
+    '<div class="card"><h3 style="margin:0 0 4px">比賽項目：大隊接力</h3><p class="hint">按「班級」可新增參賽班級，或刪除整班。</p>' + evRows(S.boot.relay, '接力') + '</div>' +
+
+    '<div class="card"><h3 style="margin:0 0 4px">新增比賽項目</h3>' +
+    '<label class="f" for="neType">類別</label><select id="neType"><option value="個人">個人單項競賽</option><option value="接力">大隊接力</option></select>' +
+    '<label class="f" for="neName">項目名稱</label><input id="neName" type="text" maxlength="30" placeholder="例如 二年級60公尺男生組">' +
+    '<label class="f" for="neCls">參賽班級代碼</label><input id="neCls" type="text" placeholder="例如 201, 202, 203">' +
+    '<p class="hint">項目名稱要以年級開頭。新增後，個人項目的選手可到「名冊管理」匯入；沒匯入時，檢錄員用「其他（手動輸入）」填寫。</p>' +
+    '<div id="neErr"></div><button class="btn pri block" id="neAdd" type="button" style="margin-top:12px">新增項目</button></div>';
+
+  $('#cfTest').addEventListener('click', function () { downloadCerts(this, '', '個人', '獎狀_版面測試', true); });
+  $('#cfTestP').addEventListener('click', function () { printCerts(this, '', '個人', '獎狀_版面測試', true); });
+  $('#cfSave').addEventListener('click', function () {
+    var v = {}; $$('[data-c]').forEach(function (i) { v[i.dataset.c] = half(i.value); });
+    var b = this; b.disabled = true; b.textContent = '儲存中…'; $('#cfErr').innerHTML = '';
+    call('saveSettings', store.get('pin'), v).then(function () { G.values = v; return reloadBoot(); })
+      .then(function () { toast('設定已儲存'); viewSettings(); })
+      .catch(function (e) { b.disabled = false; b.textContent = '儲存設定'; $('#cfErr').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
+  });
+  $$('[data-ev]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var type = b.dataset.t; var e = (type === '接力' ? S.boot.relay : S.boot.individual)[Number(b.dataset.i)]; var act = b.dataset.ev;
+      if (act === 'up' || act === 'down') {
+        b.disabled = true;
+        call('moveEvent', store.get('pin'), type, e.name, act).then(function () { return afterEventChange('順序已調整'); }).catch(function (err) { toast(err.message); b.disabled = false; });
+      } else if (act === 'cls') {
+        classSheet(e.name);
+      } else if (act === 'rename') {
+        openSheet('<h2 style="margin:0 0 4px">項目改名</h2><p class="hint">會同步更新名冊與已送出案件裡的項目名稱。不能更換年級。</p>' +
+          '<label class="f" for="rnName">新的項目名稱</label><input id="rnName" type="text" maxlength="30" value="' + esc(e.name) + '">' +
+          '<div id="rnErr"></div><button class="btn pri block big" id="rnGo" type="button">儲存</button>');
+        $('#rnGo').addEventListener('click', function () {
+          var n = half($('#rnName').value), g = this; if (!n) { return; }
+          g.disabled = true;
+          call('renameEvent', store.get('pin'), type, e.name, n).then(function (r) {
+            closeSheet(); return afterEventChange('已改名' + (r.cases ? '，同步更新 ' + r.cases + ' 筆案件' : '')).then(function () { return refresh(true); });
+          }).catch(function (err) { g.disabled = false; $('#rnErr').innerHTML = '<div class="err">' + esc(err.message) + '</div>'; });
+        });
+      } else {
+        var used = S.cases.filter(function (c) { return c.event === e.name && (c.type === '接力') === (type === '接力'); }).length;
+        confirmSheet('刪除「' + e.name + '」？', '這會刪除此項目在名冊裡的所有班級與選手，填報表單不再出現這個項目。' +
+          (used ? '已送出的 ' + used + ' 筆案件會保留，但接力案件匯出獎狀時將無法展開選手名單。' : '已送出的案件不受影響。'), '刪除項目', function () {
+          call('deleteEvent', store.get('pin'), type, e.name).then(function (r) { return afterEventChange('已刪除，移除名冊 ' + r.removed + ' 列'); }).catch(function (err) { toast(err.message); });
+        });
+      }
+    });
+  });
+  $('#neAdd').addEventListener('click', function () {
+    var name = half($('#neName').value); var cls = half($('#neCls').value).split(/[\s,，、]+/).filter(String); var b = this;
+    var err = !name ? '請填寫項目名稱' : !GRADES[name.charAt(0)] ? '項目名稱要以年級開頭，例如「二年級60公尺男生組」' : !cls.length ? '請填寫參賽班級代碼' : '';
+    if (err) { $('#neErr').innerHTML = '<div class="err">' + err + '</div>'; return; }
+    b.disabled = true;
+    call('addEvent', store.get('pin'), $('#neType').value, name, cls).then(function () { return afterEventChange('已新增 ' + name); })
+      .catch(function (e) { b.disabled = false; $('#neErr').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
+  });
+}
+
+/* 接力項目的班級增減 */
+function classSheet(evName) {
+  var e = S.boot.relay.filter(function (x) { return x.name === evName; })[0]; if (!e) { closeSheet(); return; }
+  var again = function (msg) { R.rows = null; return reloadBoot().then(function () { toast(msg); viewSettings(); classSheet(evName); }); };
+  openSheet('<h2 style="margin:0 0 4px">參賽班級</h2><p class="hint">' + esc(e.name) + '，目前 ' + e.classes.length + ' 班。</p>' +
+    e.classes.map(function (c) {
+      var n = (e.counts || {})[c] || 0;
+      return '<div class="rrow"><span>' + esc(clsLabel(c)) + '　<span class="meta">' + (n ? '名單 ' + n + ' 棒' : '僅班級，無選手名單') + '</span></span>' +
+        '<span><button class="btn sm danger" type="button" data-delcls="' + esc(c) + '"' + (e.classes.length === 1 ? ' disabled' : '') + '>刪除整班</button></span></div>';
+    }).join('') +
+    '<label class="f" for="ncCode" style="margin-top:18px">新增班級（班級代碼）</label><input id="ncCode" type="text" inputmode="numeric" maxlength="3" placeholder="例如 ' + ({ '一': '1', '二': '2', '三': '3', '四': '4', '五': '5', '六': '6' }[e.grade] || '5') + '06">' +
+    '<p class="hint">新增後只有班級、沒有選手名單，獎狀會是一班一張。要逐人列印，請到「名冊管理」匯入該班選手。</p>' +
+    '<div id="ncErr"></div><button class="btn pri block" id="ncAdd" type="button" style="margin-top:12px">新增班級</button>');
+  $('#ncAdd').addEventListener('click', function () {
+    var c = half($('#ncCode').value), b = this; if (!c) { $('#ncErr').innerHTML = '<div class="err">請填寫班級代碼</div>'; return; }
+    b.disabled = true;
+    call('addEventClass', store.get('pin'), '接力', evName, c).then(function () { return again('已新增 ' + clsLabel(c)); })
+      .catch(function (err) { b.disabled = false; $('#ncErr').innerHTML = '<div class="err">' + esc(err.message) + '</div>'; });
+  });
+  $$('[data-delcls]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var c = b.dataset.delcls; var n = (e.counts || {})[c] || 0;
+      var used = S.cases.filter(function (k) { return k.type === '接力' && k.event === evName && k.places.some(function (x) { return x.cls === c; }); }).length;
+      confirmSheet('刪除 ' + clsLabel(c) + '？', '會從「' + evName + '」移除這一班' + (n ? '與名冊裡的 ' + n + ' 棒名單' : '') + '，填報表單不再出現這一班。' +
+        (used ? '已有 ' + used + ' 筆送出的成績包含這一班，案件會保留，但匯出獎狀時無法展開該班選手。' : ''), '刪除整班', function () {
+        call('deleteEventClass', store.get('pin'), '接力', evName, c).then(function (r) { return again('已刪除 ' + clsLabel(c) + '，移除名冊 ' + r.removed + ' 列'); })
+          .catch(function (err) { toast(err.message); classSheet(evName); });
+      });
+    });
+  });
+}
+/* ───────── Word 獎狀：在瀏覽器把學校範本組成 .docx ───────── */
+var CERT = { tpl: null };
+var CRC_T = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) { c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; } t[n] = c >>> 0; } return t; })();
+function crc32(u8) { var c = 0xFFFFFFFF, i; for (i = 0; i < u8.length; i++) { c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); } return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files) { // 不壓縮的 ZIP，足以構成 .docx；files: [{name, data(Uint8Array)}]
+  var enc = new TextEncoder(), chunks = [], central = [], offset = 0;
+  var u16 = function (v) { return [v & 255, (v >>> 8) & 255]; };
+  var u32 = function (v) { return [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]; };
+  files.forEach(function (f) {
+    var name = enc.encode(f.name), crc = crc32(f.data), size = f.data.length;
+    var common = [].concat(u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(size), u32(size), u16(name.length), u16(0));
+    var local = new Uint8Array([0x50, 0x4B, 3, 4].concat(common));
+    chunks.push(local, name, f.data);
+    central.push(new Uint8Array([0x50, 0x4B, 1, 2].concat(u16(20), common, u16(0), u16(0), u16(0), u32(0), u32(offset))), name);
+    offset += local.length + name.length + size;
+  });
+  var cdSize = central.reduce(function (n, c) { return n + c.length; }, 0);
+  var end = new Uint8Array([0x50, 0x4B, 5, 6].concat(u16(0), u16(0), u16(files.length), u16(files.length), u32(cdSize), u32(offset), u16(0)));
+  return new Blob(chunks.concat(central, [end]), { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+function xmlEsc(v) { return String(v == null ? '' : v).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+/* 估算文字寬度（單位：字）。標楷體的中文為全形 1 字寬，英數與半形符號約半字寬（保守取 0.55） */
+function textEm(s) { var w = 0, i, c; s = String(s || ''); for (i = 0; i < s.length; i++) { c = s.charCodeAt(i); w += c < 0x2E80 ? 0.55 : 1; } return w; }
+/* 回傳放得進 availPt 的字級（半點為單位）。放得下就維持原字級，放不下才縮小，最小 8 點 */
+function fitHalfPt(text, availPt, baseHalfPt) {
+  var need = textEm(text) * baseHalfPt / 2;
+  if (need <= availPt * 0.97) { return baseHalfPt; }
+  return Math.max(16, Math.floor(baseHalfPt * availPt * 0.97 / need));
+}
+function sized(rpr, from, to) { var a = '<w:sz w:val="' + from + '"/><w:szCs w:val="' + from + '"/>'; return rpr.replace(a, '<w:sz w:val="' + to + '"/><w:szCs w:val="' + to + '"/>'); }
+/* 一行分成固定字級的前段與可縮小的內容，回傳要放進原本 <w:t> 位置的片段 */
+function fitRun(rpr, base, prefix, content, availPt) {
+  var sz = fitHalfPt(content, availPt - textEm(prefix) * base / 2, base);
+  if (sz === base) { return xmlEsc(prefix + content); }
+  return xmlEsc(prefix) + '</w:t></w:r><w:r>' + sized(rpr, base, sz) + '<w:t xml:space="preserve">' + xmlEsc(content);
+}
+var MM = 56.7; // 1 公釐約 56.7 twips
+function certMargins(layout) {
+  var l = layout || {}; var c = function (base, mm) { return Math.max(0, Math.round(base + (Number(mm) || 0) * MM)); };
+  return { top: c(1440, l.top), bottom: c(1440, l.bottom), left: c(1800, l.left), right: c(1800, l.right) };
+}
+function certLines(r, title, date) {
+  var d = String(date || '');
+  return {
+    NO: r.no, TITLE: title,
+    L1: r.grade + '年' + r.clsNum + '班' + (r.name ? ' 姓名：' + r.name : ''),
+    L2: '      項目：' + r.event,
+    L3: r.score ? '      成績： ' + r.score : '',
+    L4: '名次：第' + (NUM[r.rank] || r.rank) + '名',
+    DATE_A: d.slice(0, -1), DATE_B: d.slice(-1)
+  };
+}
+function buildDocx(tpl, data) { // 一張獎狀一頁，頁與頁之間用「下一頁」分節，與 Word 合併列印的結果相同
+  var n = data.records.length; var mg = certMargins(data.layout);
+  var sect = tpl.sect.replace('w:top="1440" w:right="1800" w:bottom="1440" w:left="1800"',
+    'w:top="' + mg.top + '" w:right="' + mg.right + '" w:bottom="' + mg.bottom + '" w:left="' + mg.left + '"');
+  var widthPt = (11906 - mg.left - mg.right) / 20; // 可排文字的寬度（點）
+  var body = data.records.map(function (r, i) {
+    var v = certLines(r, data.title, data.date);
+    var raw = { // 這三行太長時自動縮小字體，避免換行
+      TITLE: fitRun(tpl.rpr.TITLE, 52, '', v.TITLE, widthPt),
+      L1: fitRun(tpl.rpr.L1, 44, r.grade + '年' + r.clsNum + '班' + (r.name ? ' 姓名：' : ''), r.name || '', widthPt - 88),
+      L2: fitRun(tpl.rpr.L2, 44, '      項目：', r.event, widthPt)
+    };
+    var x = tpl.body.replace(/@@(NO|TITLE|L1|L2|L3|L4|DATE_A|DATE_B)@@/g, function (_, k) { return raw[k] !== undefined ? raw[k] : xmlEsc(v[k]); });
+    x = x.replace('@@SECT@@', i < n - 1 ? sect.replace('<w:sectPr>', '<w:sectPr><w:type w:val="nextPage"/>') : '');
+    if (i > 0) { // 每頁的圖形編號不可重複
+      x = x.replace('wp:docPr id="217"', 'wp:docPr id="' + (217 + i) + '"').replace(/_x0000_s1026/g, '_x0000_s' + (1026 + i));
+    }
+    return x;
+  }).join('');
+  var enc = new TextEncoder();
+  var files = tpl.parts.map(function (p) { return { name: p[0], data: enc.encode(p[1]) }; });
+  files.splice(3, 0, { name: 'word/document.xml', data: enc.encode(tpl.pre + body + sect + tpl.post) });
+  return zipStore(files);
+}
+function saveBlob(blob, filename) {
+  var url = URL.createObjectURL(blob); var a = document.createElement('a');
+  a.href = url; a.download = filename; a.style.display = 'none'; document.body.appendChild(a); a.click();
+  setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 4000);
+}
+function downloadCerts(btn, caseId, kind, filename, sample) {
+  var label = btn.textContent; btn.disabled = true; btn.textContent = '產生中…';
+  var done = function () { btn.disabled = false; btn.textContent = label; };
+  var tplP = CERT.tpl ? Promise.resolve(CERT.tpl) : call('getCertTemplate', store.get('pin')).then(function (t) { CERT.tpl = t; return t; });
+  Promise.all([tplP, sample ? call('getCertSample', store.get('pin')) : call('getCertificates', store.get('pin'), caseId, kind)]).then(function (r) {
+    var data = r[1];
+    if (!data.records.length) { toast(kind === '選手' ? '這個項目沒有選手名單，請改用班級獎狀' : '沒有可產生的獎狀'); done(); return; }
+    saveBlob(buildDocx(r[0], data), filename.replace(/[\\/:*?"<>|]/g, '_') + '.docx');
+    toast('已產生 ' + data.records.length + ' 張獎狀，請到下載項目開啟'); done(); if (!sample) { afterCerts(data); }
+  }).catch(function (e) { toast('產生失敗：' + e.message); done(); });
+}
+function afterCerts(data) { // 產生獎狀後，把包含的案件標記為已列印
+  var seen = {}; var ids = data.records.map(function (r) { return r.caseId; }).filter(function (id) { if (!id || seen[id]) { return false; } seen[id] = 1; return true; });
+  if (!ids.length) { return; }
+  call('markPrinted', store.get('pin'), ids, true).then(function () { return refresh(true); }).catch(function (e) { toast('獎狀已產生，但標記已列印失敗：' + e.message); });
+}
+/* 列印作業「獎狀下載與列印」的範圍 */
+function certEventList() {
+  var m = {}, order = [];
+  S.cases.forEach(function (c) { var k = c.type + '|' + c.event; if (!m[k]) { m[k] = { key: k, name: c.event, n: 0, left: 0 }; order.push(k); } m[k].n++; if (!c.printedAt) { m[k].left++; } });
+  return order.map(function (k) { return m[k]; });
+}
+function certScopeIds() {
+  if (S.certScope === 'all') { return S.cases.map(function (c) { return c.id; }); }
+  if (S.certScope === 'events') { return S.cases.filter(function (c) { return S.certEvents[c.type + '|' + c.event]; }).map(function (c) { return c.id; }); }
+  return S.cases.filter(function (c) { return !c.printedAt; }).map(function (c) { return c.id; });
+}
+function certScopeText() {
+  var n = certScopeIds().length;
+  return S.certScope === 'events' ? '已選的項目共 ' + n + ' 筆案件（不論是否列印過）。' : S.certScope === 'all' ? '包含全部 ' + n + ' 筆案件，已列印過的也會再產生一次。' : '只包含還沒列印的 ' + n + ' 筆案件，避免重複列印。';
+}
+function certButtons(c) { // 單一案件的下載按鈕
+  var pair = function (kind, label) {
+    return '<p class="certlab">' + label + '</p><div class="btns"><button class="btn" type="button" data-cert="' + kind + '" data-fmt="docx">下載 Word</button>' +
+      '<button class="btn" type="button" data-cert="' + kind + '" data-fmt="print">列印／PDF</button></div>';
+  };
+  if (c.type === '接力') { return pair('班級', '班級獎狀（每班一張）') + pair('選手', '選手獎狀（每人一張）'); }
+  return pair('個人', '個人獎狀（' + c.places.length + ' 張）');
+}
+function bindCertButtons(root, caseId, namePrefix) {
+  $$('[data-cert]', root).forEach(function (b) {
+    b.addEventListener('click', function () {
+      var kind = b.dataset.cert; var name = '獎狀_' + namePrefix + (kind === '個人' ? '' : '_' + kind);
+      if (b.dataset.fmt === 'print') { printCerts(b, caseId, kind, name); } else { downloadCerts(b, caseId, kind, name); }
+    });
+  });
+}
+
+/* ───────── 列印／PDF：依範本的字級與行距重排成可列印的網頁 ───────── */
+var CERT_FONT = '"標楷體","DFKai-SB","BiauKai","Kaiti TC","KaiTi","cwTeXKai",serif';
+var PRINT_ALPHA = { grid: 0.5, multi: 0 }; // 行高多出來的空間放在文字上方的比例（格線行置中；倍數行距的多餘空間在文字下方，與 Word 相同）
+function fontFactor() { // 量出目前字型的自然行高（相對於字級的倍數）
+  var s = document.createElement('span');
+  s.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;line-height:normal;font-size:200px;font-family:' + CERT_FONT;
+  s.textContent = '獎狀'; document.body.appendChild(s);
+  var f = s.offsetHeight / 200; document.body.removeChild(s);
+  return f > 0.8 && f < 1.8 ? f : 1.15;
+}
+function htmlEsc(v) { return esc(v); }
+function fitSpan(base, prefix, content, availPt) { // 與 Word 版相同的縮小規則
+  var sz = fitHalfPt(content, availPt - textEm(prefix) * base / 2, base);
+  return htmlEsc(prefix) + (sz === base ? htmlEsc(content) : '<span style="font-size:' + (sz / 2) + 'pt">' + htmlEsc(content) + '</span>');
+}
+function certPrintPages(data, F) {
+  var mg = certMargins(data.layout); var lay = data.layout || {};
+  var left = mg.left / 20 + (Number(lay.dx) || 0) * 72 / 25.4, top = mg.top / 20 + (Number(lay.dy) || 0) * 72 / 25.4;
+  var W = (11906 - mg.left - mg.right) / 20, G = 18;
+  var r2 = function (n) { return Math.round(n * 100) / 100; };
+  var snap = function (sz) { return Math.max(1, Math.ceil(sz * F / G - 1e-6)) * G; };
+  var nat = function (sz, mult) { return sz * F * (mult || 1); };
+  var gap = function (h) { return '<div style="height:' + r2(h) + 'pt"></div>'; };
+  var line = function (h, sz, alpha, html, css) { // h：行高；文字自然行高以外的空間依 alpha 分配在上方
+    var n = sz * F, pad = Math.max(0, (h - n) * alpha);
+    return '<div class="ln" style="height:' + r2(h) + 'pt;font-size:' + sz + 'pt;' + (css || '') + '"><div style="padding-top:' + r2(pad) + 'pt;line-height:' + r2(n) + 'pt">' + html + '</div></div>';
+  };
+  var a = PRINT_ALPHA;
+  return data.records.map(function (r) {
+    var v = certLines(r, data.title, data.date);
+    var date = String(data.date || '').split('').map(function (c) { return '<span>' + htmlEsc(c) + '</span>'; }).join('');
+    return '<div class="pg"><div class="ct" style="left:' + r2(left) + 'pt;top:' + r2(top) + 'pt;width:' + r2(W) + 'pt">' +
+      gap(2 * snap(8) + snap(3)) +
+      '<div style="position:relative;height:' + snap(8) + 'pt"><div class="tb" style="left:158.25pt;top:18pt"><div style="font-size:45pt;line-height:' + r2(45 * F) + 'pt">獎狀</div></div></div>' +
+      gap(snap(1) + snap(12)) +
+      line(snap(10), 10, a.grid, htmlEsc(v.NO), 'text-align:right') +
+      gap(snap(1)) +
+      line(snap(26), 26, a.grid, fitSpan(52, '', v.TITLE, W), 'text-align:center') +
+      gap(nat(5, 1.5)) +
+      line(nat(22, 1.5), 22, a.multi, fitSpan(44, r.grade + '年' + r.clsNum + '班' + (r.name ? ' 姓名：' : ''), r.name || '', W - 88), 'text-indent:88pt') +
+      line(nat(22, 1.5), 22, a.multi, fitSpan(44, '      項目：', r.event, W)) +
+      line(nat(22, 1.5), 22, a.multi, htmlEsc(v.L3)) +
+      line(nat(22, 1), 22, a.multi, htmlEsc(v.L4), 'text-indent:66pt') +
+      gap(7 * nat(1, 1)) +
+      line(nat(24, 1), 24, a.multi, ' 成績優異，值得嘉許。', 'text-align:center') +
+      gap(6 * nat(1, 1)) +
+      line(nat(24, 1.5), 24, a.multi, '特頒此狀，以茲鼓勵。', 'text-indent:96pt') +
+      gap(nat(24, 1.5) + nat(1, 1.5) + 6 * nat(1, 1) + 73 * nat(1, 1.5)) +
+      line(nat(24, 1.5), 24, a.multi, '<span class="fit">' + date + '</span>', 'text-align:center') +
+      '</div></div>';
+  }).join('');
+}
+var PRINT_CSS = '@page{size:A4;margin:0}' +
+  '.pg{width:210mm;height:297mm;box-sizing:border-box;background:#fff;color:#000;position:relative;overflow:hidden;page-break-after:always;break-after:page;font-family:' + CERT_FONT + '}' +
+  '.pg:last-child{page-break-after:auto;break-after:auto}' +
+  '.pg .ct{position:absolute}.pg .ln{white-space:pre;overflow:visible}' +
+  '.pg .tb{position:absolute;width:111.75pt;height:64.5pt;box-sizing:border-box;padding:3.6pt 7.2pt;background:#fff;white-space:nowrap}' +
+  '.pg .fit{display:inline-flex;justify-content:space-between;width:396pt;max-width:100%}';
+function printDoc(title, pagesHtml, count) { // 另開視窗用的完整網頁
+  return '<!DOCTYPE html><html lang="zh-Hant-TW"><head><meta charset="utf-8"><title>' + htmlEsc(title) + '</title><style>' + PRINT_CSS +
+    'html,body{margin:0;padding:0;background:#6b7280}.pg{margin:0 auto 8mm;box-shadow:0 2px 8px rgba(0,0,0,.4)}' +
+    '.bar{position:sticky;top:0;z-index:9;background:#0b5d4b;color:#fff;padding:10px 16px;font:15px/1.5 sans-serif;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8mm}' +
+    '.bar button{font:inherit;font-weight:700;padding:8px 18px;border:0;border-radius:8px;background:#fff;color:#0b5d4b;cursor:pointer}' +
+    '@media print{html,body{background:#fff}.pg{margin:0;box-shadow:none}.bar{display:none}}</style></head><body>' +
+    '<div class="bar"><button onclick="window.print()">列印／另存為 PDF</button><span>共 ' + count + ' 張。要存成 PDF：在列印視窗的「目的地／印表機」選「另存為 PDF」。' +
+    '請把邊界設為「無」、縮放 100%，並取消頁首頁尾。</span></div>' + pagesHtml +
+    '<script>window.onload=function(){setTimeout(function(){try{window.print()}catch(e){}},500)}<\/script></body></html>';
+}
+function printInline(pagesHtml) { // 無法另開視窗時，直接在本頁列印
+  var old = document.getElementById('printRoot'); if (old) { old.parentNode.removeChild(old); }
+  var root = document.createElement('div'); root.id = 'printRoot';
+  root.innerHTML = '<style>' + PRINT_CSS + '#printRoot{display:none}@media print{body>*:not(#printRoot){display:none!important}#printRoot{display:block}html,body{background:#fff;margin:0}}</style>' + pagesHtml;
+  document.body.appendChild(root);
+  setTimeout(function () { window.print(); }, 300);
+}
+function printCerts(btn, caseId, kind, title, sample) {
+  var label = btn.textContent; btn.disabled = true; btn.textContent = '產生中…';
+  var done = function () { btn.disabled = false; btn.textContent = label; };
+  var w = null;
+  try { w = window.open('', '_blank'); if (w) { w.document.write('<p style="font:16px sans-serif;padding:24px">獎狀產生中…</p>'); } } catch (e) { w = null; }
+  (sample ? call('getCertSample', store.get('pin')) : call('getCertificates', store.get('pin'), caseId, kind)).then(function (data) {
+    if (!data.records.length) { if (w) { w.close(); } toast(kind === '選手' ? '這個項目沒有選手名單，請改用班級獎狀' : '沒有可產生的獎狀'); done(); return; }
+    var pages = certPrintPages(data, fontFactor());
+    if (w && !w.closed) { w.document.open(); w.document.write(printDoc(title, pages, data.records.length)); w.document.close(); toast('已在新分頁開啟 ' + data.records.length + ' 張獎狀'); }
+    else { printInline(pages); toast('已準備 ' + data.records.length + ' 張獎狀，請在列印視窗操作'); }
+    done(); if (!sample) { afterCerts(data); }
+  }).catch(function (e) { if (w) { try { w.close(); } catch (x) { /* 視窗已關閉 */ } } toast('產生失敗：' + e.message); done(); });
+}
+
+/* ───────── 下載案件資料與刪除（行政） ───────── */
+var DL = { all: '', one: {} }; // 記錄已下載的範圍，必須先下載才能刪除
+function casesSig(list) { return list.map(function (c) { return c.id + '|' + c.status + '|' + c.places.map(function (x) { return x.cls + (x.name || '') + x.score; }).join(',') + '|' + c.log.length; }).join(';'); }
+function csvCell(v) { var s = String(v == null ? '' : v); if (/^[=+\-@]/.test(s)) { s = "'" + s; } return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function csvHead() {
+  var head = ['案件編號', '送出時間', '類別', '項目', '比賽日期', '比賽時間', '檢錄員', '急件'];
+  [1, 2, 3].forEach(function (n) { head.push('第' + n + '名班級', '第' + n + '名姓名', '第' + n + '名成績'); });
+  return head.concat(['狀態', '負責人', '處理結果', '完成時間', '播報時間', '列印時間', '稽核', '稽核意見', '稽核時間', '有照片', '處理紀錄']);
+}
+/* 讀 CSV：支援引號、欄位內換行；編碼先試 UTF-8，不行再用 Big5（Excel 另存 CSV 的預設） */
+function decodeCsv(buf) {
+  var u8 = new Uint8Array(buf);
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(u8); } catch (e) { return new TextDecoder('big5').decode(u8); }
+}
+function parseCsv(text) {
+  var rows = [], row = [], cell = '', q = false, i, c; text = String(text).replace(/^\uFEFF/, '');
+  for (i = 0; i < text.length; i++) {
+    c = text.charAt(i);
+    if (q) { if (c === '"') { if (text.charAt(i + 1) === '"') { cell += '"'; i++; } else { q = false; } } else { cell += c; } }
+    else if (c === '"') { q = true; }
+    else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text.charAt(i + 1) === '\n') { i++; } row.push(cell); rows.push(row); row = []; cell = ''; }
+    else { cell += c; }
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(function (r) { return r.some(function (v) { return String(v).trim() !== ''; }); });
+}
+function csvToItems(rows) {
+  if (!rows.length) { throw new Error('檔案是空的'); }
+  var head = rows[0].map(function (h) { return half(h); }); var at = {}; head.forEach(function (h, i) { at[h] = i; });
+  var miss = ['類別', '項目', '比賽日期', '比賽時間', '檢錄員', '第1名班級', '第1名成績'].filter(function (h) { return at[h] === undefined; });
+  if (miss.length) { throw new Error('檔案缺少這些欄位：' + miss.join('、') + '。請下載空白範本，照範本的標題列填寫'); }
+  var un = function (v) { v = half(v); return /^'[=+\-@]/.test(v) ? v.slice(1) : v; }; // 還原下載時為了安全加上的單引號
+  return rows.slice(1).map(function (r) {
+    var g = function (h) { return at[h] === undefined ? '' : un(r[at[h]] == null ? '' : r[at[h]]); };
+    var places = []; [1, 2, 3].forEach(function (n) {
+      var cls = g('第' + n + '名班級').replace(/\.0$/, ''), name = g('第' + n + '名姓名'), score = g('第' + n + '名成績');
+      if (cls || name || score) { places.push({ rank: n, cls: cls, name: name, score: score }); }
+    });
+    var log = String(at['處理紀錄'] === undefined ? '' : r[at['處理紀錄']] || '').split(/\r?\n/).map(function (l) {
+      var m = /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ([^：]*)：([\s\S]*)$/.exec(l); return m ? { t: m[1], by: m[2], what: m[3] } : null;
+    }).filter(Boolean);
+    return { id: g('案件編號'), at: g('送出時間'), type: g('類別'), event: g('項目'), date: g('比賽日期'), time: g('比賽時間'), recorder: g('檢錄員'), urgent: g('急件'),
+      places: places, status: g('狀態'), assignee: g('負責人'), result: g('處理結果'), doneAt: g('完成時間'), announcedAt: g('播報時間'), printedAt: g('列印時間'),
+      audit: g('稽核'), auditNote: g('稽核意見'), auditAt: g('稽核時間'), log: log };
+  });
+}
+function importCasesFile(file) {
+  var rd = new FileReader();
+  rd.onerror = function () { toast('無法讀取檔案'); };
+  rd.onload = function () {
+    var items;
+    try { items = csvToItems(parseCsv(decodeCsv(rd.result))); if (!items.length) { throw new Error('檔案只有標題列，沒有資料'); } }
+    catch (e) { openSheet('<h2>無法匯入</h2><div class="err">' + esc(e.message) + '</div>'); return; }
+    openSheet('<h2>匯入案件資料</h2><p>檢查中…</p>');
+    call('importCases', store.get('pin'), items, true).then(function (r) {
+      if (!r.ok) {
+        openSheet('<h2>無法匯入</h2><div class="err">有 ' + r.errorCount + ' 列資料不正確，整批都不會匯入，請修正後再試：<br>' + r.errors.map(esc).join('<br>') +
+          (r.errorCount > r.errors.length ? '<br>…其餘 ' + (r.errorCount - r.errors.length) + ' 列' : '') + '</div><p class="hint">列號以檔案為準，第 1 列是標題。</p>');
+        return;
+      }
+      openSheet('<h2>匯入案件資料</h2><p>檔案「' + esc(file.name) + '」共 ' + r.count + ' 筆，格式正確。</p><ul class="places">' +
+        items.slice(0, 12).map(function (it) { return '<li>' + esc(it.id || '（自動編號）') + '　' + esc(it.event) + '　<span class="meta">' + it.places.length + ' 個名次</span></li>'; }).join('') +
+        (items.length > 12 ? '<li class="meta">…其餘 ' + (items.length - 12) + ' 筆</li>' : '') + '</ul>' +
+        '<p class="hint">匯入的案件會加在目前的 ' + S.cases.length + ' 筆之後。案件編號留空的會自動編號。現場照片無法由檔案還原。</p>' +
+        '<div id="impErr"></div><button class="btn pri block big" id="impGo" type="button">確認匯入 ' + r.count + ' 筆</button>');
+      $('#impGo').addEventListener('click', function () {
+        var b = this; b.disabled = true; b.textContent = '匯入中…';
+        call('importCases', store.get('pin'), items, false).then(function (x) {
+          if (!x.ok) { b.disabled = false; b.textContent = '確認匯入'; $('#impErr').innerHTML = '<div class="err">' + x.errors.map(esc).join('<br>') + '</div>'; return; }
+          closeSheet(); toast('已匯入 ' + x.count + ' 筆案件'); return refresh();
+        }).catch(function (e) { b.disabled = false; b.textContent = '確認匯入'; $('#impErr').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
+      });
+    }).catch(function (e) { openSheet('<h2>無法匯入</h2><div class="err">' + esc(e.message) + '</div>'); });
+  };
+  rd.readAsArrayBuffer(file);
+}
+function casesCsv(list) {
+  var head = csvHead();
+  var rows = list.map(function (c) {
+    var r = [c.id, c.at, c.type === '接力' ? '大隊接力' : '個人單項', c.event, c.date, c.time, c.recorder, c.urgent ? '是' : '否'];
+    [1, 2, 3].forEach(function (n) { var x = c.places.filter(function (p) { return Number(p.rank) === n; })[0]; r.push(x ? x.cls : '', x ? (x.name || '') : '', x ? x.score : ''); });
+    return r.concat([c.status, c.assignee, c.result, c.doneAt, c.announcedAt, c.printedAt, c.audit, c.auditNote, c.auditAt, c.hasPhoto ? '是' : '否',
+      c.log.map(function (l) { return l.t + ' ' + l.by + '：' + l.what; }).join('\n')]);
+  });
+  return '\uFEFF' + [head].concat(rows).map(function (r) { return r.map(csvCell).join(','); }).join('\r\n') + '\r\n';
+}
+function downloadCases(list, name) { saveBlob(new Blob([casesCsv(list)], { type: 'text/csv;charset=utf-8' }), name + '.csv'); }
+function confirmTwice(t1, m1, t2, m2, okText, onOk) { // 刪除類動作一律確認兩次
+  confirmSheet(t1, m1, '繼續', function () { confirmSheet(t2, m2, okText, onOk); });
+}
+/* ───────── 案件詳情 ───────── */
+function openSheet(html) { $('#sheet').innerHTML = '<button class="x" type="button" aria-label="關閉">×</button>' + html; $('#modal').hidden = false; $('#sheet .x').addEventListener('click', closeSheet); $('#sheet').scrollTop = 0; }
+function closeSheet() { $('#modal').hidden = true; $('#sheet').innerHTML = ''; }
+$('#modal').addEventListener('click', function (e) { if (e.target.id === 'modal') { closeSheet(); } });
+function confirmSheet(title, msg, okText, onOk) {
+  openSheet('<h2>' + esc(title) + '</h2><p>' + esc(msg) + '</p><div class="btns"><button class="btn" id="cNo" type="button">返回修改</button><button class="btn pri" id="cOk" type="button">' + esc(okText) + '</button></div>');
+  $('#cNo').addEventListener('click', closeSheet);
+  $('#cOk').addEventListener('click', function () { closeSheet(); onOk(); });
+}
+function detail(id, mode) {
+  var c = S.cases.filter(function (x) { return x.id === id; })[0]; if (!c) { return; }
+  var html = '<h2 style="margin:0 0 6px">' + esc(c.id) + '　' + esc(c.event) + '</h2><div>' + chips(c) + '</div>' + stepper(c) + placesHtml(c.places) +
+    '<dl><dt>類別</dt><dd>' + (c.type === '接力' ? '大隊接力' : '個人單項競賽') + '</dd><dt>比賽時間</dt><dd>' + esc(c.date + ' ' + c.time) + '</dd>' +
+    '<dt>檢錄員</dt><dd>' + esc(c.recorder) + '</dd><dt>送出時間</dt><dd>' + esc(c.at) + '</dd>' +
+    '<dt>負責人</dt><dd>' + esc(c.assignee || '尚未分派') + '</dd><dt>處理結果</dt><dd>' + esc(c.result || '尚未填寫') + '</dd>' +
+    (c.doneAt ? '<dt>完成時間</dt><dd>' + esc(c.doneAt) + '</dd>' : '') +
+    '</dl>';
+  if (c.hasPhoto) { html += '<div id="ph"><button class="btn block" id="phBtn" type="button">查看現場照片</button></div>'; }
+  if (mode === 'admin' && has('行政')) {
+    html += '<h3>處理案件</h3><label class="f" for="aWho">負責人</label><input id="aWho" type="text" maxlength="20" list="aList" value="' + esc(c.assignee) + '">' +
+      '<datalist id="aList">' + S.boot.assignees.map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>' +
+      '<label class="f" for="aSt">狀態</label><select id="aSt">' + ['待處理', '處理中', '已完成'].map(function (s) { return '<option' + (s === c.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>' +
+      '<label class="f" for="aRes">實際處理結果（標記已完成時必填）</label><textarea id="aRes" maxlength="300" placeholder="例如：獎狀 3 張已列印，交司儀台">' + esc(c.result) + '</textarea>' +
+      '<div id="aErr"></div><button class="btn pri block big" id="aSave" type="button">儲存</button>' +
+      '<button class="btn block" id="aFix" type="button" style="margin-top:10px">更正成績（班級、姓名、成績）</button>' +
+      '<h3>刪除這筆案件</h3><div class="btns"><button class="btn" id="dlOne" type="button">下載這筆資料</button>' +
+      '<button class="btn danger" id="delOne" type="button"' + (DL.one[c.id] === casesSig([c]) ? '' : ' disabled') + '>刪除這筆案件</button></div>' +
+      '<p class="hint">先下載這筆資料，刪除按鈕才會開放。刪除前會確認兩次，並自動抄一份到「案件備份」工作表。</p>' +
+      '<h3>下載 Word 獎狀</h3><div id="certBox">' + certButtons(c) + '</div>' +
+      '<button class="btn block" id="prnTog" type="button" style="margin-top:10px">' + (c.printedAt ? '取消已列印（列印於 ' + esc(c.printedAt.slice(11, 16)) + '）' : '手動標記為已列印') + '</button><p class="hint">「下載 Word」用 Word 開啟列印。「列印／PDF」會開新分頁並跳出列印視窗，可直接印或另存為 PDF，不需要 Word。成績更正後請重新產生。</p>';
+  }
+  html += '<h3>處理紀錄</h3><ul class="log">' + c.log.map(function (l) { return '<li><time>' + esc(l.t) + '　' + esc(l.by) + '</time>' + esc(l.what) + '</li>'; }).join('') + '</ul>';
+  openSheet(html);
+  var pb = $('#phBtn');
+  if (pb) {
+    pb.addEventListener('click', function () {
+      pb.disabled = true; pb.textContent = '照片載入中…';
+      call('getPhoto', c.id).then(function (u) { $('#ph').innerHTML = u ? '<div class="photo"><img alt="現場照片" src="' + u + '"></div>' : '<p class="hint">找不到照片</p>'; })
+        .catch(function (e) { pb.disabled = false; pb.textContent = '查看現場照片'; toast(e.message); });
+    });
+  }
+  if ($('#aFix')) { $('#aFix').addEventListener('click', function () { fixSheet(c); }); }
+  if ($('#certBox')) { bindCertButtons($('#certBox'), c.id, c.id + '_' + c.event); }
+  if ($('#prnTog')) {
+    $('#prnTog').addEventListener('click', function () {
+      var b = this; b.disabled = true;
+      call('markPrinted', store.get('pin'), [c.id], !c.printedAt).then(function () { closeSheet(); toast(c.id + (c.printedAt ? ' 已取消已列印' : ' 已標記為已列印')); return refresh(); })
+        .catch(function (e) { b.disabled = false; toast(e.message); });
+    });
+  }
+  if ($('#dlOne')) {
+    $('#dlOne').addEventListener('click', function () { downloadCases([c], '體表會案件資料_' + c.id + '_' + c.event); DL.one[c.id] = casesSig([c]); $('#delOne').disabled = false; toast('已下載 ' + c.id); });
+    $('#delOne').addEventListener('click', function () {
+      confirmTwice('刪除 ' + c.id + '？', c.event + ' 的成績與處理紀錄都會從系統移除。', '最後確認：真的要刪除 ' + c.id + ' 嗎？',
+        '刪除後網站上無法復原，這個案件編號也不會再使用。資料會保留在試算表的「案件備份」工作表。', '刪除案件', function () {
+          call('deleteCase', store.get('pin'), c.id).then(function () { delete DL.one[c.id]; toast(c.id + ' 已刪除'); return refresh(); })
+            .catch(function (e) { toast(e.message); refresh(); });
+        });
+    });
+  }
+  var sv = $('#aSave');
+  if (sv) {
+    sv.addEventListener('click', function () {
+      var patch = { assignee: $('#aWho').value.trim(), status: $('#aSt').value, result: $('#aRes').value.trim() };
+      if (patch.status === '已完成' && !patch.result) { $('#aErr').innerHTML = '<div class="err">標記已完成前，請填寫實際處理結果</div>'; return; }
+      sv.disabled = true; sv.textContent = '儲存中…';
+      call('adminUpdate', store.get('pin'), c.id, patch).then(function () { closeSheet(); toast(c.id + ' 已更新'); return refresh(); })
+        .catch(function (e) { sv.disabled = false; sv.textContent = '儲存'; $('#aErr').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
+    });
+  }
+}
+
+start();
+</script>
+</body>
+</html>
