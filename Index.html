@@ -141,7 +141,7 @@ details summary{cursor:pointer;min-height:32px;font-size:16px}
 
 <script>
 'use strict';
-var APP_VERSION = 'v1.21.1'; // 介面版本，改版時與 Code.gs 的 VERSION 一起更新
+var APP_VERSION = 'v1.22.0'; // 介面版本，改版時與 Code.gs 的 VERSION 一起更新
 document.getElementById('ver').textContent = APP_VERSION;
 var S = { boot: null, cases: [], who: { roles: [], name: '', email: '' }, tab: 'report', type: '個人', certScope: 'unprinted', certEvents: {},
   photo: '', done: null, q: '', filter: '全部', loadedAt: '', busy: false };
@@ -244,7 +244,8 @@ function gate(role, label) {
 function viewReport() {
   if (S.done) { return viewDone(); }
   var now = twNow();
-  $('#main').innerHTML = '<form id="f" class="card" novalidate>' +
+  var draft = draftLoad(); if (draft) { S.type = draft.type; }
+  $('#main').innerHTML = '<form id="f" class="card" novalidate><div id="draftNote"></div>' +
     '<label class="f">比賽類別</label><div class="seg" id="seg">' +
     '<button type="button" data-type="個人">個人單項競賽</button><button type="button" data-type="接力">大隊接力</button></div>' +
     '<label class="f req" for="recorder">檢錄員姓名</label><input id="recorder" type="text" maxlength="20" autocomplete="name" value="' + esc(store.get('name')) + '">' +
@@ -262,8 +263,53 @@ function viewReport() {
   bindOther($('#places'));
   $('#cam').addEventListener('change', onPhoto); $('#pick').addEventListener('change', onPhoto);
   $('#f').addEventListener('submit', function (e) { e.preventDefault(); submit(false); });
-  ['input', 'change'].forEach(function (ev) { $('#f').addEventListener(ev, function (e) { if (['date', 'time', 'urgent'].indexOf(e.target.id) >= 0) { S.touched = true; } }); });
-  fillEvents(); renderPhoto();
+  ['input', 'change'].forEach(function (ev) {
+    $('#f').addEventListener(ev, function (e) {
+      var id = e.target.id;
+      if (['date', 'time', 'urgent'].indexOf(id) >= 0) { S.touched = true; }
+      if (id === 'recorder') { store.set('name', e.target.value.trim()); } // 姓名邊打邊記，重新載入後不必再輸入
+      if (['recorder', 'gcode', 'event', 'cam', 'pick', 'fixWhyR'].indexOf(id) < 0) { S.dirty = true; draftSave(); } // 項目切換由 onEventChange 處理
+    });
+  });
+  fillEvents(); if (draft) { draftApply(draft); } renderPhoto();
+}
+/* ───────── 草稿暫存：填到一半離開（切分頁、切到別的 App、頁面被重新載入）回來時自動恢復。照片不暫存 ───────── */
+var DRAFT_HOURS = 12;
+function draftSave(at) {
+  if (!$('#f') || !$('#event')) { return; }
+  var ev = $('#event').value; if (!ev || !S.dirty) { return; }
+  var rows = $$('#places fieldset').map(function (fs) {
+    var o = { rank: fs.dataset.rank }; $$('[data-k]', fs).forEach(function (i) { o[i.dataset.k] = i.value; }); return o;
+  });
+  store.set('draft', JSON.stringify({ at: at || Date.now(), type: S.type, event: ev, date: $('#date').value, time: $('#time').value, urgent: $('#urgent').checked,
+    places: rows, editId: S.editId || '', asNew: S.asNew === ev, photo: !!S.photo }));
+}
+function draftClear() { S.dirty = false; store.set('draft', ''); }
+function draftLoad() {
+  var d; try { d = JSON.parse(store.get('draft') || 'null'); } catch (e) { d = null; }
+  if (!d || !d.event || !d.at || Date.now() - d.at > DRAFT_HOURS * 3600000 || (d.type !== '個人' && d.type !== '接力')) { if (store.get('draft')) { store.set('draft', ''); } return null; }
+  var list = d.type === '接力' ? S.boot.relay : S.boot.individual;
+  if (!list.some(function (e) { return e.name === d.event; })) { store.set('draft', ''); return null; } // 項目已被改名或刪除
+  return d;
+}
+function draftApply(d) {
+  $('#event').value = d.event; if (!curEvent()) { draftClear(); return; }
+  onEventChange(true); // 保留模式：不自動帶入已回報的資料
+  (d.places || []).forEach(function (o) {
+    var fs = $('#places').querySelector('fieldset[data-rank="' + o.rank + '"]'); if (!fs) { return; }
+    Object.keys(o).forEach(function (k) { var i = fs.querySelector('[data-k="' + k + '"]'); if (i) { i.value = o[k]; } });
+    var other = fs.querySelector('.other'), sel = fs.querySelector('[data-k="sel"]'); if (other && sel) { other.hidden = sel.value !== 'other'; }
+  });
+  if (d.date) { $('#date').value = d.date; } if (d.time) { $('#time').value = d.time; } $('#urgent').checked = !!d.urgent;
+  S.touched = true; S.dirty = true;
+  var c = d.editId ? S.cases.filter(function (x) { return x.id === d.editId; })[0] : null;
+  if (d.editId) { S.editId = d.editId; if (c) { renderDup('edit', c); } else { renderDup(''); } }
+  else if (d.asNew) { S.asNew = d.event; var lc = latestCase(d.event, d.type); if (lc) { renderDup('new', lc); } }
+  setSendLabel(); draftSave(d.at);
+  var t = new Date(d.at); var hm = ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2);
+  $('#draftNote').innerHTML = '<div class="note" style="margin-bottom:12px">已恢復 ' + hm + ' 尚未送出的填寫內容' + (d.editId ? '（更正 ' + esc(d.editId) + '）' : '') + '。' +
+    (d.photo && !S.photo ? '照片沒有保留，需要的話請重新選擇。' : '') + '<button class="btn sm" id="draftDrop" type="button" style="margin-left:6px">清除重填</button></div>';
+  $('#draftDrop').addEventListener('click', function () { draftClear(); S.editId = null; S.asNew = null; viewReport(); });
 }
 function evList() { return S.type === '接力' ? S.boot.relay : S.boot.individual; }
 function fillEvents() {
@@ -431,8 +477,8 @@ function renderDup(state, c) {
     html = '<div class="note">將另外新增一筆，原案件 ' + esc(c.id) + ' 保留。<button class="btn sm" id="loadOld" type="button">改為更正原案件</button></div>';
   }
   box.innerHTML = html; box.dataset.state = state === 'checking' ? 'checking' : 'done';
-  if ($('#asNew')) { $('#asNew').addEventListener('click', function () { S.editId = null; S.asNew = c.event; fillPlaces(); var n = twNow(); $('#date').value = n.date; $('#time').value = n.time; $('#urgent').checked = false; setSendLabel(); renderDup('new', c); }); }
-  if ($('#loadOld')) { $('#loadOld').addEventListener('click', function () { S.asNew = null; loadCase(c); }); }
+  if ($('#asNew')) { $('#asNew').addEventListener('click', function () { S.editId = null; S.asNew = c.event; fillPlaces(); var n = twNow(); $('#date').value = n.date; $('#time').value = n.time; $('#urgent').checked = false; setSendLabel(); renderDup('new', c); draftClear(); if ($('#draftNote')) { $('#draftNote').innerHTML = ''; } }); }
+  if ($('#loadOld')) { $('#loadOld').addEventListener('click', function () { S.asNew = null; loadCase(c); if (S.dirty) { draftSave(); } }); }
 }
 function loadCase(c) {
   var e = curEvent(); if (!e) { return; }
@@ -440,21 +486,29 @@ function loadCase(c) {
   if (c.date) { $('#date').value = c.date; } if (c.time) { $('#time').value = c.time; }
   $('#urgent').checked = !!c.urgent; setSendLabel(); renderDup('edit', c);
 }
-function onEventChange() {
-  S.editId = null; S.asNew = null; S.touched = false; fillPlaces(); setSendLabel();
+function onEventChange(keep) {
+  keep = keep === true; // 由事件觸發時 keep 會是事件物件，視為 false
+  S.editId = null; S.asNew = null; S.touched = keep; if (!keep) { draftClear(); if ($('#draftNote')) { $('#draftNote').innerHTML = ''; } }
+  fillPlaces(); setSendLabel();
   var e = curEvent(); if (!e) { renderDup(''); return; }
   var name = e.name, type = S.type;
-  var apply = function (final) {
+  var apply = function (final, loaded) { // loaded：案件清單剛從伺服器取回（斷線時為否）
     if (!$('#event') || !$('#dupBox')) { return; } // 已離開填報表單（例如切到別的分頁）
     var cur = curEvent(); if (!cur || cur.name !== name || S.type !== type) { return; } // 使用者已換到別的項目
-    if (S.editId || S.asNew === name) { $('#dupBox').dataset.state = 'done'; return; }
+    if (S.editId || S.asNew === name) { // 從草稿恢復時案件清單可能還沒載入，這裡補上提示
+      if (S.editId && loaded) {
+        var ec = S.cases.filter(function (x) { return x.id === S.editId; })[0];
+        if (!ec) { S.editId = null; setSendLabel(); draftSave(); } else if (!$('#fixWhyR')) { renderDup('edit', ec); }
+      } else if (!S.editId && !$('#dupBox').innerHTML) { var nc = latestCase(name, type); if (nc) { renderDup('new', nc); } }
+      $('#dupBox').dataset.state = 'done'; return;
+    }
     var c = latestCase(name, type);
     if (c && S.boot.allowRevise === false) { renderDup('locked', c); return; }
     // 選完項目後已經動過日期、時間、急件或照片，就不自動蓋掉，改顯示帶入按鈕
     if (c && !placesTyped() && !S.touched) { loadCase(c); } else if (c) { renderDup('offer', c); } else { renderDup(final ? '' : 'checking'); }
   };
   apply(false);
-  call('listCases', store.get('pin')).then(function (r) { S.cases = r.cases; S.who = r.who; S.boot.allowRevise = r.allowRevise !== false; apply(true); }).catch(function () { apply(true); });
+  call('listCases', store.get('pin')).then(function (r) { S.cases = r.cases; S.who = r.who; S.boot.allowRevise = r.allowRevise !== false; apply(true, true); }).catch(function () { apply(true, false); });
 }
 /* ───────── 更正已送出的成績（行政） ───────── */
 function fixSheet(c) {
@@ -510,7 +564,7 @@ function submit(force) {
       data.id = editId; data.reason = $('#fixWhyR') ? $('#fixWhyR').value.trim() : '';
       call('reviseReport', data).then(function (r) {
         if (!r.changed) { btn.disabled = false; btn.textContent = label; toast('內容沒有變動，不需要更正'); return; }
-        S.done = { id: r.id, at: r.at, data: data, fixed: true, notes: r.notes || [] }; S.photo = ''; S.editId = null; viewDone(); window.scrollTo(0, 0); refresh(true);
+        draftClear(); S.done = { id: r.id, at: r.at, data: data, fixed: true, notes: r.notes || [] }; S.photo = ''; S.editId = null; viewDone(); window.scrollTo(0, 0); refresh(true);
       }).catch(function (e) { fail(btn, e); });
       return;
     }
@@ -520,7 +574,7 @@ function submit(force) {
         confirmSheet('此項目已有人回報', '「' + data.event + '」已有案件 ' + r.duplicate + '。確定要另外新增一筆嗎？請通知獎狀列印以哪一筆為準。', '仍要送出', function () { submit(true); });
         return;
       }
-      S.done = { id: r.id, at: r.at, data: data }; S.photo = ''; viewDone(); window.scrollTo(0, 0); refresh(true);
+      draftClear(); S.done = { id: r.id, at: r.at, data: data }; S.photo = ''; viewDone(); window.scrollTo(0, 0); refresh(true);
     }).catch(function (e) { fail(btn, e); });
   };
   if (!force && data.places.length < 3) {
