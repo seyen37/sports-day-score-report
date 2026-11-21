@@ -28,6 +28,7 @@ main{max-width:720px;margin:0 auto;padding:14px 14px 80px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
 label.f{display:block;font-weight:600;font-size:15px;margin:14px 0 6px}
 label.f:first-child{margin-top:0}
+#codeBox label.f:first-child{margin-top:14px}
 .req::after{content:" *";color:var(--red)}
 input[type=text],input[type=date],input[type=time],input[type=password],input[type=search],select,textarea{width:100%;min-height:48px;padding:10px 12px;border:1.5px solid #9aa8a1;border-radius:10px;font:inherit;background:#fff;color:var(--ink)}
 textarea{min-height:88px;resize:vertical}
@@ -140,7 +141,7 @@ details summary{cursor:pointer;min-height:32px;font-size:16px}
 
 <script>
 'use strict';
-var APP_VERSION = 'v1.20.2'; // 介面版本，改版時與 Code.gs 的 VERSION 一起更新
+var APP_VERSION = 'v1.21.0'; // 介面版本，改版時與 Code.gs 的 VERSION 一起更新
 document.getElementById('ver').textContent = APP_VERSION;
 var S = { boot: null, cases: [], who: { roles: [], name: '', email: '' }, tab: 'report', type: '個人', certScope: 'unprinted', certEvents: {},
   photo: '', done: null, q: '', filter: '全部', loadedAt: '', busy: false };
@@ -228,6 +229,7 @@ function viewReport() {
     '<label class="f">比賽類別</label><div class="seg" id="seg">' +
     '<button type="button" data-type="個人">個人單項競賽</button><button type="button" data-type="接力">大隊接力</button></div>' +
     '<label class="f req" for="recorder">檢錄員姓名</label><input id="recorder" type="text" maxlength="20" autocomplete="name" value="' + esc(store.get('name')) + '">' +
+    '<div id="codeBox">' + codeHtml() + '</div>' +
     '<label class="f req" for="event">項目</label><select id="event"></select><div id="dupBox" data-state=""></div>' +
     '<div class="row2"><div><label class="f req" for="date">日期</label><input id="date" type="date" value="' + now.date + '"></div>' +
     '<div><label class="f req" for="time">時間</label><input id="time" type="time" value="' + now.time + '"></div></div>' +
@@ -460,17 +462,29 @@ function placesHtml(places, type) {
     return '<li><b>第' + NUM[x.rank] + '名</b> ' + esc(clsLabel(x.cls)) + (x.name ? '　' + esc(x.name) : '') + '　<span class="sc">' + esc(x.score || '不記成績') + '</span></li>';
   }).join('') + '</ul>';
 }
+function codeHtml() { // 系統設定有填檢錄通行碼、而且沒有登入身分時才需要輸入
+  if (!S.boot || !S.boot.needCode || S.who.roles.length) { return ''; }
+  return '<label class="f req" for="gcode">檢錄通行碼</label><input id="gcode" type="text" maxlength="20" autocomplete="off" autocapitalize="off" value="' + esc(store.get('code')) + '">' +
+    '<p class="hint">由行政人員提供，輸入一次後這支手機會記住。</p>';
+}
 function submit(force) {
   var data; $('#formErr').innerHTML = '';
   try { data = collect(); } catch (e) { $('#formErr').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; return; }
+  var gc = $('#gcode');
+  if (gc && !gc.value.trim()) { $('#formErr').innerHTML = '<div class="err">請填寫檢錄通行碼</div>'; gc.focus(); return; }
+  data.code = gc ? gc.value.trim() : store.get('code'); data.pin = store.get('pin');
   var editId = S.editId; var label = editId ? '送出更正' : '送出成績';
   var fail = function (btn, e) {
     btn.disabled = false; btn.textContent = label;
+    if (/檢錄通行碼/.test(e.message)) { // 通行碼不對，或頁面開啟後行政才設定了通行碼
+      S.boot.needCode = true; if (!$('#gcode') && $('#codeBox')) { $('#codeBox').innerHTML = codeHtml(); }
+      if ($('#gcode')) { $('#gcode').focus(); }
+    }
     $('#formErr').innerHTML = '<div class="err">送出失敗：' + esc(e.message) + '<br>資料還在畫面上，請再按一次送出。</div>';
   };
   var go = function () {
     var btn = $('#send'); btn.disabled = true; btn.textContent = '送出中…';
-    store.set('name', data.recorder);
+    store.set('name', data.recorder); if (data.code) { store.set('code', data.code); }
     if (editId) { // 更正已回報的案件
       data.id = editId; data.reason = $('#fixWhyR') ? $('#fixWhyR').value.trim() : '';
       call('reviseReport', data).then(function (r) {
@@ -847,7 +861,8 @@ var CONF_FIELDS = [
   ['活動日期', 'date', 10, '活動舉辦的日期。沒有另外填頒獎日期時，獎狀上的日期就用這一天'],
   ['頒獎日期', 'date', 10, '印在獎狀最下方的日期。留空則依序採用活動日期、產生獎狀當天'],
   ['頒獎日期格式', 'select', ['中華民國', '西元'], '中華民國：中華民國115年11月21日。西元：西元2026年11月21日'],
-  ['檢錄員可更正', 'select', ['開啟', '關閉'], '開啟：填報時若項目已有回報，會帶入原資料，檢錄員可直接送出更正。關閉：只提示已有回報，更正要由行政在收件匣處理'],
+  ['檢錄員可更正', 'select', ['開啟', '關閉'], '開啟：填報時若項目已有回報，會帶入原資料，檢錄員可直接送出更正。關閉：只提示已有回報，更正要由行政在列印作業處理'],
+  ['檢錄通行碼', 'text', 20, '選填。有填的話，檢錄員送出或更正成績時要輸入這組通行碼，可擋下不相關的人亂填。留空則不檢查，拿到網址就能填報。行政、司儀、校長登入後不必輸入'],
   ['字號前綴', 'text', 20, '獎狀字號前面的文字。匯出資料的「完整字號」欄會是：前綴＋編號＋號，例如 ○縣市○獎字第1150001號'],
   ['獎狀字號', 'text', 20, '匯出獎狀資料的「編號」欄。選流水號時，這裡填第一張的號碼，例如 115001'],
   ['編號方式', 'select', ['同一字號', '流水號'], '同一字號：每張獎狀編號相同。流水號：從獎狀字號開始，每張加 1'],
@@ -1312,7 +1327,10 @@ function detail(id, mode) {
     '<dt>負責人</dt><dd>' + esc(c.assignee || '尚未分派') + '</dd><dt>處理結果</dt><dd>' + esc(c.result || '尚未填寫') + '</dd>' +
     (c.doneAt ? '<dt>完成時間</dt><dd>' + esc(c.doneAt) + '</dd>' : '') +
     '</dl>';
-  if (c.hasPhoto) { html += '<div id="ph"><button class="btn block" id="phBtn" type="button">查看現場照片</button></div>'; }
+  if (c.hasPhoto) {
+    html += S.who.roles.length ? '<div id="ph"><button class="btn block" id="phBtn" type="button">查看現場照片</button></div>'
+      : '<p class="hint" id="phNote">這筆回報附有現場照片，登入身分後才能查看。</p>';
+  }
   if (mode === 'admin' && has('行政')) {
     html += '<h3>處理案件</h3><label class="f" for="aWho">負責人</label><input id="aWho" type="text" maxlength="20" list="aList" value="' + esc(c.assignee) + '">' +
       '<datalist id="aList">' + S.boot.assignees.map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>' +
@@ -1332,7 +1350,7 @@ function detail(id, mode) {
   if (pb) {
     pb.addEventListener('click', function () {
       pb.disabled = true; pb.textContent = '照片載入中…';
-      call('getPhoto', c.id).then(function (u) { $('#ph').innerHTML = u ? '<div class="photo"><img alt="現場照片" src="' + u + '"></div>' : '<p class="hint">找不到照片</p>'; })
+      call('getPhoto', store.get('pin'), c.id).then(function (u) { $('#ph').innerHTML = u ? '<div class="photo"><img alt="現場照片" src="' + u + '"></div>' : '<p class="hint">找不到照片</p>'; })
         .catch(function (e) { pb.disabled = false; pb.textContent = '查看現場照片'; toast(e.message); });
     });
   }

@@ -3,7 +3,7 @@
  * 設計者：臺北市福林國小 許士彥 2026.11.21.
  * 使用方式：綁定在一份 Google 試算表上，先執行一次 setup()，再部署為網頁應用程式。
  */
-const VERSION = 'v1.20.2'; // 後端版本，改版時與 Index.html 的 APP_VERSION 一起更新
+const VERSION = 'v1.21.0'; // 後端版本，改版時與 Index.html 的 APP_VERSION 一起更新
 const TZ = 'Asia/Taipei';
 const SH = { CASE: '案件', ROSTER: '名單', ROLE: '角色', CONF: '設定', MERGE: '獎狀合併列印', BACKUP: '案件備份' };
 const CASE_H = ['案件編號', '送出時間', '類別', '項目', '比賽日期', '比賽時間', '檢錄員', '填報帳號', '急件',
@@ -101,14 +101,18 @@ const SCHOOL_YEAR_ = String(TW_NOW_.getUTCFullYear() - 1911 - (TW_NOW_.getUTCMon
 const CONF_DEFAULT = { '系統名稱': '體表會成績回報系統', '學校名稱': '○○國小', '學年度': SCHOOL_YEAR_, '活動名稱': '體育表演會',
   '活動日期': '', '字號前綴': '○縣市○獎字第', '獎狀字號': '', '編號方式': '同一字號', '逾時分鐘': '15',
   '獎狀上邊界微調': '0', '獎狀下邊界微調': '0', '獎狀左邊界微調': '0', '獎狀右邊界微調': '0',
-  '列印頁垂直位移': '0', '列印頁水平位移': '0', '頒獎日期': '', '頒獎日期格式': '中華民國', '檢錄員可更正': '開啟' };
+  '列印頁垂直位移': '0', '列印頁水平位移': '0', '頒獎日期': '', '頒獎日期格式': '中華民國', '檢錄員可更正': '開啟', '檢錄通行碼': '' };
 const DATE_MODES = ['中華民國', '西元'];
 const SHIFT_KEYS = ['列印頁垂直位移', '列印頁水平位移'];
 const MARGIN_KEYS = ['獎狀上邊界微調', '獎狀下邊界微調', '獎狀左邊界微調', '獎狀右邊界微調'];
 const NO_MODES = ['同一字號', '流水號'];
+let CONF_CACHE_ = null; // 同一次請求內只讀一次設定工作表（每次請求都會重新載入程式，不會跨請求殘留）
 function conf_() { // 舊版試算表沒有的設定項目，會以預設值補上
-  const o = {}; Object.keys(CONF_DEFAULT).forEach(function (k) { o[k] = CONF_DEFAULT[k]; });
-  table_(SH.CONF).forEach(function (r) { if (r[0]) { o[r[0]] = r[1]; } }); return o;
+  if (!CONF_CACHE_) {
+    const o = {}; Object.keys(CONF_DEFAULT).forEach(function (k) { o[k] = CONF_DEFAULT[k]; });
+    table_(SH.CONF).forEach(function (r) { if (r[0]) { o[r[0]] = r[1]; } }); CONF_CACHE_ = o;
+  }
+  const copy = {}; Object.keys(CONF_CACHE_).forEach(function (k) { copy[k] = CONF_CACHE_[k]; }); return copy;
 }
 function str_(v, max, label, required) {
   const s = String(v === null || v === undefined ? '' : v).trim();
@@ -141,6 +145,14 @@ function need_(pin, allowed) {
   if (!ok) { throw new Error('沒有權限：此功能限' + allowed.join('、') + '使用'); }
   return w;
 }
+/* 檢錄通行碼：系統設定有填才檢查。行政、司儀、校長登入後不必另外輸入 */
+function gateCode_() { return String(conf_()['檢錄通行碼'] || '').trim(); }
+function gate_(p) {
+  const code = gateCode_(); if (!code) { return; }
+  if (String(p.code === null || p.code === undefined ? '' : p.code).trim() === code) { return; }
+  if (p.pin && who_(p.pin).roles.length) { return; }
+  throw new Error('檢錄通行碼不正確，請向行政人員確認');
+}
 
 /* ───────── 項目與名單 ───────── */
 function events_() {
@@ -169,7 +181,7 @@ function events_() {
 function getBootstrap(pin) {
   const ev = events_(); const c = conf_(); const w = who_(pin);
   return {
-    version: VERSION, allowRevise: c['檢錄員可更正'] !== '關閉', title: c['活動名稱'] || '體育表演會', appName: c['系統名稱'], school: c['學校名稱'], year: c['學年度'], eventDate: c['活動日期'],
+    version: VERSION, needCode: !!gateCode_(), allowRevise: c['檢錄員可更正'] !== '關閉', title: c['活動名稱'] || '體育表演會', appName: c['系統名稱'], school: c['學校名稱'], year: c['學年度'], eventDate: c['活動日期'],
     overdueMin: Number(c['逾時分鐘']) || 15,
     individual: ev.individual.map(function (e) { return { name: e.name, grade: e.grade, finalists: e.finalists }; }),
     relay: ev.relay.map(function (e) {
@@ -204,7 +216,7 @@ function listCases(pin) {
   const c = conf_(); const om = Number(c['逾時分鐘']) || 15; const nowMs = Date.now();
   const cases = table_(SH.CASE).filter(function (r) { return r[0]; })
     .map(function (r) { return rowToCase_(r, om, nowMs); });
-  return { cases: cases, who: who_(pin), now: now_(), allowRevise: c['檢錄員可更正'] !== '關閉', mcOrder: String(c['播報順序'] || '').split(',').filter(String) };
+  return { cases: cases, who: who_(pin), now: now_(), needCode: !!gateCode_(), allowRevise: c['檢錄員可更正'] !== '關閉', mcOrder: String(c['播報順序'] || '').split(',').filter(String) };
 }
 function findRow_(id) {
   const sh = sheet_(SH.CASE); const n = sh.getLastRow();
@@ -225,7 +237,8 @@ function saveRow_(f, who, action) {
   f.values[COL['處理紀錄']] = JSON.stringify(log);
   writeRows_(f.sh, f.row, [f.values]);
 }
-function getPhoto(id) {
+function getPhoto(pin, id) { // 現場照片可能拍到學生，限登入後查看
+  need_(pin, ROLES);
   const f = findRow_(id); const fid = f.values[COL['照片檔案ID']];
   if (!fid) { return ''; }
   const blob = DriveApp.getFileById(fid).getBlob();
@@ -270,6 +283,7 @@ function summary_(places) {
 /* 案件編號取「目前最大號碼」與「設定裡記錄的流水號」較大者加 1，刪除案件後號碼不會重複使用 */
 function setConf_(key, value) {
   const sh = sheet_(SH.CONF); const rows = table_(SH.CONF);
+  if (CONF_CACHE_) { CONF_CACHE_[key] = value; }
   for (let i = 0; i < rows.length; i++) { if (rows[i][0] === key) { writeRows_(sh, i + 2, [[key, value]]); return; } }
   writeRows_(sh, sh.getLastRow() + 1, [[key, value]]);
 }
@@ -283,6 +297,7 @@ function nextCaseId_(rows) {
 /* ───────── 檢錄員送出 ───────── */
 function submitReport(p, force) {
   p = p || {};
+  gate_(p);
   const type = p.type === '接力' ? '接力' : '個人';
   const recorder = str_(p.recorder, 20, '檢錄員姓名', true);
   const date = str_(p.date, 10, '日期', true); const time = str_(p.time, 5, '時間', true);
@@ -328,6 +343,7 @@ function submitReport(p, force) {
 /* ───────── 檢錄員更正自己回報過的項目（填報頁帶入原資料後送出） ───────── */
 function reviseReport(p) {
   p = p || {};
+  gate_(p);
   const id = str_(p.id, 8, '案件編號', true);
   const recorder = str_(p.recorder, 20, '檢錄員姓名', true);
   const date = str_(p.date, 10, '日期', true); const time = str_(p.time, 5, '時間', true);
@@ -655,7 +671,7 @@ function importRoster(pin, rows, mode) {
 }
 
 /* ───────── 系統設定（限行政） ───────── */
-const CONF_EDIT = ['系統名稱', '學校名稱', '學年度', '活動名稱', '活動日期', '字號前綴', '獎狀字號', '編號方式', '逾時分鐘'].concat(MARGIN_KEYS, SHIFT_KEYS, ['頒獎日期', '頒獎日期格式', '檢錄員可更正']);
+const CONF_EDIT = ['系統名稱', '學校名稱', '學年度', '活動名稱', '活動日期', '字號前綴', '獎狀字號', '編號方式', '逾時分鐘'].concat(MARGIN_KEYS, SHIFT_KEYS, ['頒獎日期', '頒獎日期格式', '檢錄員可更正', '檢錄通行碼']);
 function getSettings(pin) {
   need_(pin, ['行政']); const c = conf_(); const o = {};
   CONF_EDIT.forEach(function (k) { o[k] = c[k]; });
@@ -687,6 +703,8 @@ function saveSettings(pin, input) {
   if (DATE_MODES.indexOf(v['頒獎日期格式']) < 0) { throw new Error('頒獎日期格式只能是「中華民國」或「西元」'); }
   v['檢錄員可更正'] = str_(input['檢錄員可更正'], 2, '檢錄員可更正', false) || '開啟';
   if (['開啟', '關閉'].indexOf(v['檢錄員可更正']) < 0) { throw new Error('檢錄員可更正只能是「開啟」或「關閉」'); }
+  v['檢錄通行碼'] = str_(input['檢錄通行碼'], 20, '檢錄通行碼', false);
+  if (/\s/.test(v['檢錄通行碼'])) { throw new Error('檢錄通行碼不能含空白'); }
   SHIFT_KEYS.forEach(function (k) {
     const s = str_(input[k], 6, k, false) || '0';
     if (!/^-?\d{1,2}(\.\d)?$/.test(s) || Math.abs(Number(s)) > 20) { throw new Error(k + '請填 -20 到 20 之間的數字（單位公釐）'); }
@@ -704,6 +722,7 @@ function saveSettings(pin, input) {
     CONF_EDIT.forEach(function (k) {
       if (at[k]) { writeRows_(sh, at[k], [[k, v[k]]]); } else { writeRows_(sh, next++, [[k, v[k]]]); }
     });
+    CONF_CACHE_ = null;
     return { ok: true };
   } finally { lock.releaseLock(); }
 }
